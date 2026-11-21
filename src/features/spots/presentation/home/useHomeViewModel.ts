@@ -2,13 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 
 import { useDependencies } from '@/core/di/DependenciesProvider';
+import { DEFAULT_POSITION } from '@/core/location/LocationService';
 import { useSessionStore } from '@/features/auth/presentation/state/sessionStore';
+import { useDrawerStore } from '@/features/menu/presentation/drawerStore';
 import type { Coordinates } from '@/shared/domain/Coordinates';
 
 import type { MapSpot } from '../../domain/entities/Spot';
 
-/** Centre par défaut de la carte (lac de Créteil) tant que le GPS n'a pas répondu. */
-export const DEFAULT_CENTER: Coordinates = { latitude: 48.7778, longitude: 2.4455 };
+/** Centre par défaut de la carte tant que le GPS n'a pas répondu. */
+export const DEFAULT_CENTER: Coordinates = DEFAULT_POSITION;
 
 export interface HomeUiState {
   isLoading: boolean;
@@ -22,6 +24,7 @@ export interface HomeUiState {
 export function useHomeViewModel() {
   const { getMapSpots, locationService } = useDependencies();
   const userId = useSessionStore((state) => state.user?.id ?? '');
+  const openMenu = useDrawerStore((state) => state.open);
 
   const [uiState, setUiState] = useState<HomeUiState>({
     isLoading: true,
@@ -59,7 +62,6 @@ export function useHomeViewModel() {
 
   // Écrans prévus dans les prochains sprints : on affiche un message en attendant.
   const comingSoon = (feature: string) => Alert.alert(feature, 'Disponible dans un prochain sprint.');
-  const openMenu = () => comingSoon('Menu');
   const createSpot = () => comingSoon('Création de spot');
   const openSpot = (mapSpot: MapSpot) => comingSoon(mapSpot.spot.name);
 

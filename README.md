@@ -3,7 +3,8 @@
 Application mobile iOS et Android (React Native + Expo, TypeScript) pour repérer, enregistrer et partager des spots de pêche.
 
 - Architecture : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- Sprint en cours et comment lancer l'app : [docs/SPRINT-1.md](docs/SPRINT-1.md)
+- Lancer l'app : [docs/SPRINT-1.md](docs/SPRINT-1.md)
+- Sprint 2 (menu, Appâts, météo) : [docs/SPRINT-2.md](docs/SPRINT-2.md)
 
 ```bash
 npm install
@@ -12,4 +13,4 @@ npx expo start         # ensuite
 npm test               # tests unitaires
 ```
 
-Carte : MapLibre + OpenFreeMap. Données © contributeurs OpenStreetMap.
+Carte : MapLibre + OpenFreeMap. Données © contributeurs OpenStreetMap. Météo : Open-Meteo.com.

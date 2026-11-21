@@ -33,6 +33,7 @@ export default function RootLayout() {
             Sinon Expo Router redirige automatiquement vers une route autorisée. */}
         <Stack.Protected guard={isSignedIn}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="appats" />
         </Stack.Protected>
         <Stack.Protected guard={!isSignedIn}>
           <Stack.Screen name="login" />
