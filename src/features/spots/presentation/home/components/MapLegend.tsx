@@ -2,12 +2,12 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 
-/** Petite légende en bas à gauche de la carte. */
-export function MapLegend() {
+/** Petite légende en bas à gauche de la carte. En mode « Mes spots », une seule ligne. */
+export function MapLegend({ onlyMine }: { onlyMine: boolean }) {
   return (
     <View style={styles.card}>
       <LegendRow color={colors.mine} label="Mes spots" />
-      <LegendRow color={colors.community} label="Communauté" />
+      {!onlyMine && <LegendRow color={colors.community} label="Communauté" />}
     </View>
   );
 }

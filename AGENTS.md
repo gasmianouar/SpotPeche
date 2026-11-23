@@ -34,6 +34,44 @@ Run lint and typecheck before declaring any task done.
 Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
 Docs: https://docs.expo.dev/eas/index.md
 
+## Règle impérative : tout se fait sur le disque D:
+
+Le disque C: ne doit plus être utilisé par le projet. Code, outils, caches, fichiers temporaires et journaux vont tous sur **D:**. Avant toute commande (npm, npx, expo, gradle, adb, émulateur), définir ces variables d'environnement :
+
+| Variable | Valeur | Rôle |
+|---|---|---|
+| `JAVA_HOME` | `D:\Android\jbr` | Java utilisé par Gradle |
+| `ANDROID_HOME` / `ANDROID_SDK_ROOT` | `D:\Android\Sdk` | SDK Android |
+| `ANDROID_USER_HOME` / `ANDROID_EMULATOR_HOME` | `D:\Android\userhome` | Réglages Android, clé de debug |
+| `ANDROID_AVD_HOME` | `D:\Android\userhome\avd` | Émulateurs |
+| `GRADLE_USER_HOME` | `D:\Android\gradle` | Cache Gradle |
+| `TEMP` / `TMP` | `D:\Android\Temp` | Fichiers temporaires |
+| `JAVA_TOOL_OPTIONS` | `-Djava.io.tmpdir=D:\Android\Temp` | Temporaires de Java |
+| `npm_config_cache` | `D:\Android\npm-cache` | Cache npm |
+| `__UNSAFE_EXPO_HOME_DIRECTORY` | `D:\Android\expo-home` | État d'Expo (sinon `C:\Users\…\.expo`) |
+
+Exemple de lancement Android (cmd, pas PowerShell : la politique d'exécution bloque `npm.ps1`) :
+
+```bat
+set JAVA_HOME=D:\Android\jbr
+set ANDROID_HOME=D:\Android\Sdk
+set ANDROID_SDK_ROOT=D:\Android\Sdk
+set ANDROID_USER_HOME=D:\Android\userhome
+set ANDROID_EMULATOR_HOME=D:\Android\userhome
+set ANDROID_AVD_HOME=D:\Android\userhome\avd
+set GRADLE_USER_HOME=D:\Android\gradle
+set TEMP=D:\Android\Temp
+set TMP=D:\Android\Temp
+set JAVA_TOOL_OPTIONS=-Djava.io.tmpdir=D:\Android\Temp
+set npm_config_cache=D:\Android\npm-cache
+set __UNSAFE_EXPO_HOME_DIRECTORY=D:\Android\expo-home
+set PATH=D:\Android\jbr\bin;D:\Android\Sdk\platform-tools;D:\Android\Sdk\emulator;%PATH%
+npx.cmd expo run:android
+```
+
+- Ne jamais installer d'outil, de SDK ou de cache sous `C:\Users\…` ni dans `C:\Program Files`.
+- Les réglages mémoire de Gradle sont appliqués par `plugins/withLowMemoryGradle.js` (ne pas les retirer).
+
 ## Rules
 
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.

@@ -33,7 +33,9 @@
         {
           "locationWhenInUsePermission": "Spot utilise votre position pour centrer la carte sur les spots autour de vous."
         }
-      ]
+      ],
+      "expo-sqlite",
+      "./plugins/withLowMemoryGradle"
     ],
     "scheme": "spotpeche",
     "experiments": {

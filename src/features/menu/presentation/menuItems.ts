@@ -1,14 +1,16 @@
 import type Ionicons from '@expo/vector-icons/Ionicons';
 
 import { colors } from '@/core/theme/tokens';
+import type { SpotFilter } from '@/features/spots/domain/usecases/GetMapSpots';
 
 /**
  * La liste des entrées du menu, sous forme de DONNÉES.
- * Ajouter une entrée = ajouter un objet ici, sans toucher au composant
+ * Ajouter ou retirer une entrée = modifier ce tableau, sans toucher au composant
  * (le O de SOLID : ouvert à l'extension, fermé à la modification).
  */
 export type MenuDestination =
-  | { kind: 'route'; href: '/' | '/meteo' | '/appats' }
+  | { kind: 'map'; filter: SpotFilter } // l'accueil, avec tous les spots ou seulement les miens
+  | { kind: 'route'; href: '/appats' }
   | { kind: 'comingSoon' };
 
 export interface MenuItem {
@@ -19,16 +21,15 @@ export interface MenuItem {
   destination: MenuDestination;
 }
 
-export const MAIN_MENU: MenuItem[] = [
-  { id: 'map', label: 'Carte des spots', icon: 'map-outline', destination: { kind: 'route', href: '/' } },
-  { id: 'mySpots', label: 'Mes spots', icon: 'location-outline', iconColor: colors.mine, destination: { kind: 'comingSoon' } },
-  { id: 'favorites', label: 'Favoris', icon: 'heart-outline', destination: { kind: 'comingSoon' } },
+export const MENU_ITEMS: MenuItem[] = [
+  { id: 'map', label: 'Carte des spots', icon: 'map-outline', destination: { kind: 'map', filter: 'all' } },
+  {
+    id: 'mySpots',
+    label: 'Mes spots',
+    icon: 'location-outline',
+    iconColor: colors.mine,
+    destination: { kind: 'map', filter: 'mine' },
+  },
   { id: 'baitShops', label: 'Appâts', icon: 'storefront-outline', destination: { kind: 'route', href: '/appats' } },
   { id: 'catches', label: 'Carnet de prises', icon: 'fish-outline', destination: { kind: 'comingSoon' } },
-  { id: 'weather', label: 'Météo', icon: 'cloud-outline', destination: { kind: 'route', href: '/meteo' } },
-];
-
-export const SECONDARY_MENU: MenuItem[] = [
-  { id: 'settings', label: 'Paramètres', icon: 'settings-outline', destination: { kind: 'comingSoon' } },
-  { id: 'help', label: 'Aide & réglementation', icon: 'help-circle-outline', destination: { kind: 'comingSoon' } },
 ];

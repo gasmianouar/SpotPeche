@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 
-import { MAIN_MENU, SECONDARY_MENU, type MenuItem } from './menuItems';
+import { MENU_ITEMS, type MenuItem } from './menuItems';
 import { useDrawerViewModel } from './useDrawerViewModel';
 
 const DRAWER_WIDTH = 304;
@@ -57,18 +57,17 @@ export function AppDrawer() {
           </Text>
         </View>
 
-        <ScrollView contentContainerStyle={styles.list}>
-          {MAIN_MENU.map((item) => (
+        {/* flex: 1 : la liste prend la place libre, le bouton de déconnexion reste en bas. */}
+        <ScrollView style={styles.listContainer} contentContainerStyle={styles.list}>
+          {MENU_ITEMS.map((item) => (
             <DrawerRow key={item.id} item={item} active={isActive(item)} onPress={() => select(item)} />
           ))}
-          <View style={styles.divider} />
-          {SECONDARY_MENU.map((item) => (
-            <DrawerRow key={item.id} item={item} active={false} onPress={() => select(item)} />
-          ))}
         </ScrollView>
+        <View style={styles.divider} />
 
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel="Se déconnecter"
           onPress={confirmSignOut}
           style={({ pressed }) => [styles.row, styles.signOut, { marginBottom: insets.bottom + spacing.md }, pressed && styles.pressed]}
         >
@@ -131,6 +130,7 @@ const styles = StyleSheet.create({
   avatarText: { fontFamily: fonts.displayBold, fontSize: 24, color: colors.night },
   name: { fontFamily: fonts.bodyBold, fontSize: 18, color: colors.surface },
   provider: { fontFamily: fonts.body, fontSize: 14, color: colors.nightText },
+  listContainer: { flex: 1 },
   list: { padding: spacing.md, gap: 2 },
   row: {
     minHeight: 48,
@@ -145,6 +145,6 @@ const styles = StyleSheet.create({
   rowLabel: { fontFamily: fonts.bodyMedium, fontSize: 15, color: colors.ink },
   rowLabelActive: { fontFamily: fonts.bodyBold, color: colors.primary },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: spacing.sm, marginHorizontal: spacing.md },
-  signOut: { marginHorizontal: spacing.md },
+  signOut: { marginHorizontal: spacing.md, marginTop: spacing.sm },
   signOutLabel: { fontFamily: fonts.bodySemiBold, color: '#B42318' },
 });

@@ -1,12 +1,11 @@
-import { Camera, Map, Marker, type CameraRef, type LngLat } from '@maplibre/maplibre-react-native';
+import { Camera, Map, Marker, type CameraRef, type ViewState } from '@maplibre/maplibre-react-native';
 import { useEffect, useRef } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { colors } from '@/core/theme/tokens';
 import type { Coordinates } from '@/shared/domain/Coordinates';
 
 import type { MapSpot } from '../../../domain/entities/Spot';
-import { SpotMarker } from './SpotMarker';
 
 /**
  * Style de carte gratuit, sans clé d'API : OpenFreeMap (données OpenStreetMap),
@@ -14,17 +13,38 @@ import { SpotMarker } from './SpotMarker';
  */
 const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 
+/** Images des épingles (densités @2x/@3x choisies automatiquement par React Native). */
+const PIN_MINE = require('../../../../../../assets/map/pin-mine.png');
+const PIN_COMMUNITY = require('../../../../../../assets/map/pin-community.png');
+
 /** Le domaine parle en {latitude, longitude} ; MapLibre attend [longitude, latitude]. */
-const toLngLat = (c: Coordinates): LngLat => [c.longitude, c.latitude];
+const toLngLat = (c: Coordinates): [number, number] => [c.longitude, c.latitude];
+
+/** Position de la caméra à mémoriser entre deux affichages de la carte. */
+export interface CameraState {
+  center: Coordinates;
+  zoom: number;
+}
 
 interface Props {
   spots: MapSpot[];
-  initialCenter: Coordinates;
+  /** Où placer la caméra à l'ouverture (dernière position connue, ou position par défaut). */
+  initialCamera: CameraState;
   userPosition: Coordinates | null;
   onSpotPress: (spot: MapSpot) => void;
+  /** Appelé quand l'utilisateur a fini de déplacer la carte. */
+  onCameraChange: (camera: CameraState) => void;
 }
 
-export function SpotMap({ spots, initialCenter, userPosition, onSpotPress }: Props) {
+/**
+ * La carte et ses spots.
+ *
+ * Chaque spot est un <Marker> : une vue React (ici l'image de l'épingle) posée sur
+ * la carte. Sur Android, ces vues ne sont pas raccrochées quand l'onglet revient
+ * au premier plan : HomeScreen recrée donc la carte à chaque retour sur l'onglet
+ * (voir `useIsFocused`), et cette carte repart de la dernière position de caméra.
+ */
+export function SpotMap({ spots, initialCamera, userPosition, onSpotPress, onCameraChange }: Props) {
   const cameraRef = useRef<CameraRef>(null);
 
   // Quand une nouvelle position arrive, la caméra s'y déplace en douceur.
@@ -34,18 +54,34 @@ export function SpotMap({ spots, initialCenter, userPosition, onSpotPress }: Pro
     }
   }, [userPosition]);
 
+  const handleRegionDidChange = (state: ViewState) => {
+    const [longitude, latitude] = state.center;
+    onCameraChange({ center: { latitude, longitude }, zoom: state.zoom });
+  };
+
   return (
-    <Map style={styles.map} mapStyle={MAP_STYLE_URL} logo={false} attribution compass={false}>
-      <Camera ref={cameraRef} initialViewState={{ center: toLngLat(initialCenter), zoom: 13.5 }} />
+    <Map
+      style={styles.map}
+      mapStyle={MAP_STYLE_URL}
+      logo={false}
+      attribution
+      compass={false}
+      onRegionDidChange={(event) => handleRegionDidChange(event.nativeEvent)}
+    >
+      <Camera
+        ref={cameraRef}
+        initialViewState={{ center: toLngLat(initialCamera.center), zoom: initialCamera.zoom }}
+      />
 
       {spots.map((mapSpot) => (
         <Marker key={mapSpot.spot.id} id={mapSpot.spot.id} lngLat={toLngLat(mapSpot.spot.coordinates)} anchor="bottom">
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`${mapSpot.isMine ? 'Mon spot' : 'Spot de la communauté'} : ${mapSpot.spot.name}`}
+            hitSlop={6}
             onPress={() => onSpotPress(mapSpot)}
           >
-            <SpotMarker isMine={mapSpot.isMine} />
+            <Image source={mapSpot.isMine ? PIN_MINE : PIN_COMMUNITY} style={styles.pin} />
           </Pressable>
         </Marker>
       ))}
@@ -61,6 +97,7 @@ export function SpotMap({ spots, initialCenter, userPosition, onSpotPress }: Pro
 
 const styles = StyleSheet.create({
   map: { flex: 1 },
+  pin: { width: 36, height: 44 },
   userDot: {
     width: 18,
     height: 18,

@@ -5,6 +5,7 @@ Application mobile iOS et Android (React Native + Expo, TypeScript) pour repére
 - Architecture : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - Lancer l'app : [docs/SPRINT-1.md](docs/SPRINT-1.md)
 - Sprint 2 (menu, Appâts, météo) : [docs/SPRINT-2.md](docs/SPRINT-2.md)
+- Sprint 3 (Mes spots hors connexion, déconnexion) : [docs/SPRINT-3.md](docs/SPRINT-3.md)
 
 ```bash
 npm install

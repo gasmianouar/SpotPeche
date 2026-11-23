@@ -9,11 +9,9 @@ export const colors = {
   muted: '#4F6468', // texte secondaire
   border: '#DCE4E3',
   primary: '#0E5A63',
-  primaryDark: '#0A434A',
   primarySoft: '#D8ECEE',
   accent: '#E9A23B', // bouton « + »
   night: '#0C3438', // fond de l'écran de connexion
-  nightLine: '#1D5C62',
   nightText: '#B7D3D6',
   mine: '#137A42', // marqueurs verts : mes spots
   community: '#D63A2C', // marqueurs rouges : spots des autres

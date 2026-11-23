@@ -1,4 +1,4 @@
-import { usePathname, useRouter } from 'expo-router';
+import { useGlobalSearchParams, usePathname, useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import { Alert } from 'react-native';
 
@@ -11,19 +11,29 @@ import type { MenuItem } from './menuItems';
 /** VIEWMODEL du menu latéral. */
 export function useDrawerViewModel() {
   const router = useRouter();
-  const pathname = usePathname(); // route affichée, ex. "/meteo"
+  const pathname = usePathname(); // route affichée, ex. "/" ou "/appats"
+  const { filter } = useGlobalSearchParams<{ filter?: string }>(); // ex. "/?filter=mine"
   const { signOut } = useDependencies();
   const { isOpen, close } = useDrawerStore();
   const user = useSessionStore((s) => s.user);
   const clearSession = useSessionStore((s) => s.clear);
 
-  const isActive = (item: MenuItem) => item.destination.kind === 'route' && item.destination.href === pathname;
+  const isActive = (item: MenuItem) => {
+    const d = item.destination;
+    if (d.kind === 'map') return pathname === '/' && (filter === 'mine' ? 'mine' : 'all') === d.filter;
+    if (d.kind === 'route') return pathname === d.href;
+    return false;
+  };
 
   const select = useCallback(
     (item: MenuItem) => {
       close();
-      if (item.destination.kind === 'route') {
-        router.navigate(item.destination.href);
+      const d = item.destination;
+      if (d.kind === 'map') {
+        // Même écran (l'accueil), avec un paramètre dans l'URL : /?filter=mine
+        router.navigate({ pathname: '/', params: { filter: d.filter } });
+      } else if (d.kind === 'route') {
+        router.navigate(d.href);
       } else {
         Alert.alert(item.label, 'Disponible dans un prochain sprint.');
       }
@@ -31,21 +41,24 @@ export function useDrawerViewModel() {
     [close, router],
   );
 
-  const confirmSignOut = useCallback(() => {
-    Alert.alert('Se déconnecter ?', 'Vous devrez vous reconnecter pour accéder à vos spots.', [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Se déconnecter',
-        style: 'destructive',
-        onPress: async () => {
-          close();
-          await signOut.execute();
-          // Vider la session suffit : Stack.Protected renvoie vers /login.
-          clearSession();
-        },
-      },
-    ]);
+  /** Déconnexion : fermer le menu, prévenir le fournisseur, vider la session. */
+  const signOutNow = useCallback(async () => {
+    close();
+    try {
+      await signOut.execute();
+    } finally {
+      // Même si le fournisseur ne répond pas, on déconnecte localement.
+      // Vider la session suffit : Stack.Protected renvoie vers /login.
+      clearSession();
+    }
   }, [close, signOut, clearSession]);
+
+  const confirmSignOut = useCallback(() => {
+    Alert.alert('Se déconnecter ?', 'Vos spots restent enregistrés sur ce téléphone.', [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Se déconnecter', style: 'destructive', onPress: signOutNow },
+    ]);
+  }, [signOutNow]);
 
   return { isOpen, close, user, isActive, select, confirmSignOut };
 }

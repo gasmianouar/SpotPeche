@@ -39,3 +39,13 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Caches et fichiers temporaires (outils, agents) : jamais dans git
+.expo-home/
+.npm-cache/
+.tmp/
+event-log/
+node-compile-cache/
+
+# Réglages locaux de l'éditeur (chemins propres à ce PC)
+.vscode/

@@ -5,6 +5,7 @@ import type { SpotRepository } from '../domain/repositories/SpotRepository';
  * Spots d'exemple autour du lac de Créteil (Val-de-Marne), le temps d'avoir
  * un vrai backend. Les spots dont ownerId vaut 'me' sont ceux de
  * l'utilisateur de démo (FakeAuthRepository) : ils apparaîtront en vert.
+ * Ils servent aussi à remplir la base locale au premier lancement.
  */
 export const SAMPLE_SPOTS: Spot[] = [
   { id: 's1', name: 'Ponton nord', ownerId: 'u42', coordinates: { latitude: 48.7812, longitude: 2.4455 } },
@@ -17,11 +18,15 @@ export const SAMPLE_SPOTS: Spot[] = [
   { id: 's8', name: 'Plage aux carpes', ownerId: 'me', coordinates: { latitude: 48.7803, longitude: 2.4352 } },
 ];
 
-/** Implémentation en mémoire de SpotRepository (sprint 1). */
+/** Implémentation en mémoire de SpotRepository (tests). */
 export class InMemorySpotRepository implements SpotRepository {
   constructor(private readonly spots: Spot[] = SAMPLE_SPOTS) {}
 
   async getAll(): Promise<Spot[]> {
     return [...this.spots];
+  }
+
+  async getByOwner(ownerId: string): Promise<Spot[]> {
+    return this.spots.filter((spot) => spot.ownerId === ownerId);
   }
 }

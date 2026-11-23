@@ -28,4 +28,19 @@ describe('GetMapSpots', () => {
 
     expect(result.every((s) => !s.isMine)).toBe(true);
   });
+
+  it('avec le filtre « mine », ne renvoie que mes spots', async () => {
+    const useCase = new GetMapSpots(new InMemorySpotRepository([spot('a', 'me'), spot('b', 'other'), spot('c', 'me')]));
+
+    const result = await useCase.execute('me', 'mine');
+
+    expect(result.map((s) => s.spot.id)).toEqual(['a', 'c']);
+    expect(result.every((s) => s.isMine)).toBe(true);
+  });
+
+  it('avec le filtre « mine » et personne de connecté, ne renvoie rien', async () => {
+    const useCase = new GetMapSpots(new InMemorySpotRepository([spot('a', 'me')]));
+
+    expect(await useCase.execute('', 'mine')).toEqual([]);
+  });
 });
