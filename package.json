@@ -42,5 +42,8 @@
   "private": true,
   "jest": {
     "preset": "jest-expo"
+  },
+  "overrides": {
+    "react-dom": "$react"
   }
 }
