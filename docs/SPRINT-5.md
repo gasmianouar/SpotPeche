@@ -17,7 +17,7 @@
 ## Mise à jour : « Ça mord ? », Prises / Appâts, météo du spot
 - **Ça mord ?** : sous Itinéraire / Partager, trois pastilles 🤩 · 😐 · 😴 avec le nombre d'avis. Chacun donne **un seul avis** : en toucher une autre le change, retoucher la même le retire (cas d'usage `VoteActivity`). L'activité choisie à la création compte comme l'avis du créateur. Le badge d'activité à côté du nom a été retiré.
 - **Prises · Appâts** : une seule carte compacte (« Prises » et « Appâts », avec leur nombre), une pastille **+ Ajouter** et une flèche **déplier / replier**. Repliée, la liste tient sur une ligne qui défile ; dépliée, toutes les vignettes s'affichent. L'état ouvert ou fermé est un simple état d'affichage : il reste dans la vue (`useState`), pas dans le ViewModel.
-- **Météo du spot** : le sous-titre montre les coordonnées GPS du spot, et l'indice de pêche passe sous l'heure par heure.
+- **Météo du spot** : le sous-titre montre les coordonnées GPS du spot, l'indice de pêche passe sous l'heure par heure, et les prévisions des prochains jours sont retirées (elles restent sur l'écran Météo de l'accueil).
 - **À venir** : l'activité des poissons heure par heure, qui sera calculée par un agent IA.
 
 Base de données, **migration 4** : table `spot_activity_votes`, avec la clé primaire `(spot_id, user_id)` (un avis par personne). Les spots existants reçoivent l'avis de leur créateur.

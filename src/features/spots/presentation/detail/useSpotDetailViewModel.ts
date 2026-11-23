@@ -72,10 +72,7 @@ export function useSpotDetailViewModel(spotId: string) {
 
   const openWeather = useCallback(() => {
     if (!spot) return;
-    router.push({
-      pathname: '/spot/[id]/meteo',
-      params: { id: spot.id, lat: String(spot.coordinates.latitude), lon: String(spot.coordinates.longitude) },
-    });
+    router.push({ pathname: '/spot/[id]/meteo', params: { id: spot.id } });
   }, [router, spot]);
 
   const addItems = useCallback(

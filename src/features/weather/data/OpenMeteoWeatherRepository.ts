@@ -9,7 +9,7 @@ import type { WeatherRepository } from '../domain/repositories/WeatherRepository
  * il faudra un abonnement et une clé (on ne changera que cette classe).
  */
 const BASE_URL = 'https://api.open-meteo.com/v1/forecast';
-const HOURS_SHOWN = 12;
+const HOURS_SHOWN = 12; // assez pour couvrir la journée de pêche (aube ou crépuscule)
 
 /**
  * DTO (Data Transfer Object) : la forme EXACTE du JSON renvoyé par l'API.
@@ -32,6 +32,7 @@ export interface OpenMeteoResponse {
     temperature_2m: number[];
     weather_code: number[];
     pressure_msl: number[];
+    wind_speed_10m: number[];
   };
   daily: {
     time: string[];
@@ -53,7 +54,7 @@ export class OpenMeteoWeatherRepository implements WeatherRepository {
       longitude: longitude.toFixed(4),
       current:
         'temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,pressure_msl',
-      hourly: 'temperature_2m,weather_code,pressure_msl',
+      hourly: 'temperature_2m,weather_code,pressure_msl,wind_speed_10m',
       daily: 'weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset',
       timezone: 'auto', // heures dans le fuseau du lieu
       forecast_days: '6',
@@ -88,6 +89,7 @@ export function mapOpenMeteoResponse(dto: OpenMeteoResponse): Forecast {
       temperature: dto.hourly.temperature_2m[start + i],
       condition: conditionFromWmoCode(dto.hourly.weather_code[start + i]),
       pressure: dto.hourly.pressure_msl[start + i],
+      windSpeed: dto.hourly.wind_speed_10m?.[start + i] ?? dto.current.wind_speed_10m,
     })),
     daily: dto.daily.time.map((localDate, i) => ({
       localDate,

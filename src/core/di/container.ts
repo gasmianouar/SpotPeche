@@ -1,3 +1,4 @@
+import { env } from '@/core/config/env';
 import { createDatabaseProvider } from '@/core/database/openDatabase';
 import { NativeExternalApps, type DirectionsService, type ShareService } from '@/core/external/ExternalApps';
 import { RandomIdGenerator } from '@/core/ids/IdGenerator';
@@ -8,6 +9,15 @@ import {
 } from '@/core/location/LocationService';
 import { ExpoPhotoService, type PhotoService } from '@/core/media/PhotoService';
 import { FakeAuthRepository } from '@/features/auth/data/FakeAuthRepository';
+import { CachedFishActivityAdvisor } from '@/features/fishingForecast/data/CachedFishActivityAdvisor';
+import { LocalFishActivityAdvisor } from '@/features/fishingForecast/data/LocalFishActivityAdvisor';
+import { FORECAST_MIGRATIONS } from '@/features/fishingForecast/data/local/forecastMigrations';
+import { SqliteReliabilityRatingRepository } from '@/features/fishingForecast/data/local/SqliteReliabilityRatingRepository';
+import { RemoteAiFishActivityAdvisor } from '@/features/fishingForecast/data/RemoteAiFishActivityAdvisor';
+import { ResilientFishActivityAdvisor } from '@/features/fishingForecast/data/ResilientFishActivityAdvisor';
+import type { FishActivityAdvisor } from '@/features/fishingForecast/domain/ports/FishActivityAdvisor';
+import { GetSpotFishingConditions } from '@/features/fishingForecast/domain/usecases/GetSpotFishingConditions';
+import { RateForecastReliability } from '@/features/fishingForecast/domain/usecases/RateForecastReliability';
 import { SignInWithProvider } from '@/features/auth/domain/usecases/SignInWithProvider';
 import { SignOut } from '@/features/auth/domain/usecases/SignOut';
 import { SPOT_MIGRATIONS } from '@/features/spots/data/local/spotMigrations';
@@ -45,6 +55,8 @@ export interface Dependencies {
   voteActivity: VoteActivity;
   recognizeFromPhoto: RecognizeFromPhoto;
   getLocalWeather: GetLocalWeather;
+  getSpotFishingConditions: GetSpotFishingConditions;
+  rateForecastReliability: RateForecastReliability;
   locationService: LocationService;
   preciseLocationService: PreciseLocationService;
   photoService: PhotoService;
@@ -56,13 +68,24 @@ export function createDependencies(): Dependencies {
   const authRepository = new FakeAuthRepository();
   // Base SQLite locale « spot.db » : les spots restent disponibles hors connexion.
   // Chaque feature apporte ses migrations ; on les réunit ici.
-  const database = createDatabaseProvider('spot.db', [...SPOT_MIGRATIONS]);
+  const database = createDatabaseProvider('spot.db', [...SPOT_MIGRATIONS, ...FORECAST_MIGRATIONS]);
   const spotRepository = new SqliteSpotRepository(database);
   const messageRepository = new SqliteMessageRepository(database);
   const reactionRepository = new SqliteReactionRepository(database);
   const voteRepository = new SqliteActivityVoteRepository(database);
   const idGenerator = new RandomIdGenerator();
   const externalApps = new NativeExternalApps();
+
+  // Activité des poissons : l'agent IA (serveur Claude) si son adresse est configurée,
+  // avec repli automatique sur l'algorithme local, et un cache de 30 min.
+  // Sans adresse : l'algorithme local seul. (Décorateurs empilés : le O et le D de SOLID.)
+  const localAdvisor = new LocalFishActivityAdvisor();
+  const fishActivityAdvisor: FishActivityAdvisor = env.spotAiUrl
+    ? new CachedFishActivityAdvisor(
+        new ResilientFishActivityAdvisor(new RemoteAiFishActivityAdvisor(env.spotAiUrl), localAdvisor),
+      )
+    : localAdvisor;
+  const ratingRepository = new SqliteReliabilityRatingRepository(database);
   const weatherRepository = new OpenMeteoWeatherRepository();
   // Une seule instance joue trois rôles (position, position précise, nom de ville).
   const expoLocation = new ExpoLocationService();
@@ -79,6 +102,8 @@ export function createDependencies(): Dependencies {
     voteActivity: new VoteActivity(voteRepository),
     recognizeFromPhoto: new RecognizeFromPhoto(new DemoImageRecognizer()),
     getLocalWeather: new GetLocalWeather(expoLocation, expoLocation, weatherRepository),
+    getSpotFishingConditions: new GetSpotFishingConditions(weatherRepository, fishActivityAdvisor, localAdvisor, ratingRepository),
+    rateForecastReliability: new RateForecastReliability(ratingRepository),
     locationService: expoLocation,
     preciseLocationService: expoLocation,
     photoService: new ExpoPhotoService(),

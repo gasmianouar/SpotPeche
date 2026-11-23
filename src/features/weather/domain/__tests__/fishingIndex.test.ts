@@ -2,7 +2,7 @@ import type { Forecast, HourlyForecast } from '../entities/Weather';
 import { computeFishingIndex } from '../services/fishingIndex';
 
 const hours = (pressures: number[]): HourlyForecast[] =>
-  pressures.map((pressure, i) => ({ localTime: `2026-11-21T1${i}:00`, temperature: 12, condition: 'overcast', pressure }));
+  pressures.map((pressure, i) => ({ localTime: `2026-11-21T1${i}:00`, temperature: 12, condition: 'overcast', pressure, windSpeed: 10 }));
 
 const forecast = (overrides: { pressures: number[]; wind: number; condition?: Forecast['current']['condition'] }): Forecast => ({
   current: {

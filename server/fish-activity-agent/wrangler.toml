@@ -1,0 +1,12 @@
+# Configuration du serveur de l'agent IA (Cloudflare Workers, offre gratuite suffisante pour commencer).
+name = "spot-fish-agent"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+
+[vars]
+# Modèle Claude utilisé. claude-fable-5-2 : le plus performant des modèles publics, pour un raisonnement exigeant.
+# Moins cher : "claude-opus-5-5" (2 fois moins cher) ou "claude-sonnet-5-5" (4 fois moins cher).
+MODEL = "claude-fable-5-2"
+
+# La clé de l'API N'EST PAS ici : elle se range comme secret, hors du code :
+#   npx wrangler secret put ANTHROPIC_API_KEY

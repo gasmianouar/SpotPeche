@@ -1,5 +1,4 @@
 import { DEFAULT_POSITION, type LocationService, type PlaceNameResolver } from '@/core/location/LocationService';
-import type { Coordinates } from '@/shared/domain/Coordinates';
 
 import type { Forecast, Place } from '../entities/Weather';
 import type { WeatherRepository } from '../repositories/WeatherRepository';
@@ -14,7 +13,7 @@ export interface LocalWeather {
 }
 
 /**
- * CAS D'USAGE : « la météo là où je suis » (ou à un endroit précis, comme un spot).
+ * CAS D'USAGE : « la météo là où je suis ».
  *
  * 1. position GPS (ou position par défaut si refusée) ;
  * 2. nom de la ville correspondante ;
@@ -31,12 +30,9 @@ export class GetLocalWeather {
     private readonly now: () => Date = () => new Date(),
   ) {}
 
-  /**
-   * @param at Lieu précis (ex. un spot). Sans lui : la position GPS du téléphone.
-   */
-  async execute(at?: Coordinates): Promise<LocalWeather> {
-    const gpsPosition = at ? null : await this.locationService.getCurrentPosition().catch(() => null);
-    const coordinates = at ?? gpsPosition ?? DEFAULT_POSITION;
+  async execute(): Promise<LocalWeather> {
+    const gpsPosition = await this.locationService.getCurrentPosition().catch(() => null);
+    const coordinates = gpsPosition ?? DEFAULT_POSITION;
 
     const [cityName, forecast] = await Promise.all([
       this.placeNameResolver.getCityName(coordinates),
@@ -44,11 +40,7 @@ export class GetLocalWeather {
     ]);
 
     return {
-      place: {
-        name: cityName ?? (at ? 'Spot' : 'Position actuelle'),
-        coordinates,
-        isFallback: !at && gpsPosition === null,
-      },
+      place: { name: cityName ?? 'Position actuelle', coordinates, isFallback: gpsPosition === null },
       forecast,
       fishingIndex: computeFishingIndex(forecast),
       moonPhase: moonPhase(this.now()).name,

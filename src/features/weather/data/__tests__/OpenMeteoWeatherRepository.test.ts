@@ -16,6 +16,7 @@ const DTO: OpenMeteoResponse = {
     temperature_2m: [7, 8, 9.5, 10.2],
     weather_code: [45, 3, 3, 61],
     pressure_msl: [1013, 1012.8, 1012.4, 1012],
+    wind_speed_10m: [10, 12, 14, 18],
   },
   daily: {
     time: ['2026-11-21'],

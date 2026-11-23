@@ -30,6 +30,7 @@ export interface HourlyForecast {
   readonly temperature: number;
   readonly condition: WeatherCondition;
   readonly pressure: number;
+  readonly windSpeed: number; // km/h
 }
 
 export interface DailyForecast {
