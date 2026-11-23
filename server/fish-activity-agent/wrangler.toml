@@ -7,6 +7,8 @@ compatibility_date = "2026-11-01"
 # Modèle Claude utilisé. claude-fable-5-2 : le plus performant des modèles publics, pour un raisonnement exigeant.
 # Moins cher : "claude-opus-5-5" (2 fois moins cher) ou "claude-sonnet-5-5" (4 fois moins cher).
 MODEL = "claude-fable-5-2"
+# Optionnel : un autre modèle pour la reconnaissance photo (par défaut, le même que MODEL).
+# RECOGNITION_MODEL = "claude-sonnet-5-5"
 
 # La clé de l'API N'EST PAS ici : elle se range comme secret, hors du code :
 #   npx wrangler secret put ANTHROPIC_API_KEY

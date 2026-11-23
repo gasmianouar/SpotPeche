@@ -78,3 +78,12 @@ npx jest   # 70 tests
 
 ## À venir
 Les messages et réactions sont pour l'instant **sur le téléphone** (SQLite). Pour que d'autres pêcheurs les voient, il faudra un serveur (même contrat `MessageRepository`, une autre implémentation : seule une ligne de `container.ts` changera).
+
+## Itinéraire et partage (mise à jour)
+- **Itinéraire** ouvre la feuille « Itinéraire vers le spot » : **Google Maps** ou **Waze**, avec le trajet complet depuis la position actuelle.
+  - Google Maps : `comgooglemaps://?daddr=lat,lon` (app sur iPhone), sinon `https://www.google.com/maps/dir/?api=1&destination=lat,lon`, qui ouvre l'app sur Android ou le site.
+  - Waze : `waze://?ll=lat,lon&navigate=yes`, sinon `https://waze.com/ul?…&navigate=yes`, la page Waze qui propose d'installer l'app.
+- **Partager** ouvre la feuille « Partager la localisation » : aperçu du message (créateur, GPS, lien de carte), puis **WhatsApp** (texte complet, avec les liens Google Maps et Waze), **Messenger** (le lien de carte, car Messenger n'accepte qu'un lien) ou **Autres** (feuille de partage du téléphone : copier, SMS…).
+- Si l'app choisie n'est pas installée : WhatsApp Web pour WhatsApp, la feuille de partage pour Messenger, avec un message pour expliquer.
+- `NativeExternalApps` reçoit les fonctions du téléphone par son constructeur (`PhoneLinks`) : on peut ainsi le tester avec un faux téléphone (`ExternalApps.test.ts`).
+- iOS : `LSApplicationQueriesSchemes` (comgooglemaps, waze, whatsapp, fb-messenger) déclaré dans `app.json`.

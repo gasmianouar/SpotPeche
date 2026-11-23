@@ -6,15 +6,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 import { IconButton } from '@/shared/ui/IconButton';
 
-import type { CatalogKind } from '../../domain/entities/Catalog';
 import { useRecognitionViewModel } from './useRecognitionViewModel';
 
-const TITLES: Record<CatalogKind, string> = { species: "Reconnaître l'espèce", bait: "Reconnaître l'appât" };
 const percent = (confidence: number) => `${Math.round(confidence * 100)} %`;
 
-/** VUE de la reconnaissance par photo (écrans 3b et 3d de la maquette). */
-export function RecognitionScreen({ kind, onAccept }: { kind: CatalogKind; onAccept: (itemId: string) => void }) {
-  const { uiState, takePhoto, pickPhoto, accept, close } = useRecognitionViewModel(kind, onAccept);
+/** VUE de la reconnaissance de l'espèce par photo (écran 3b de la maquette). */
+export function RecognitionScreen({ onAccept }: { onAccept: (itemId: string) => void }) {
+  const { uiState, takePhoto, pickPhoto, accept, close } = useRecognitionViewModel(onAccept);
   const photoUri = uiState.status === 'noPhoto' ? null : uiState.photoUri;
   const [best, ...others] = uiState.status === 'done' ? uiState.results : [];
 
@@ -24,7 +22,7 @@ export function RecognitionScreen({ kind, onAccept }: { kind: CatalogKind; onAcc
       <View style={styles.header}>
         <IconButton icon="chevron-back" color={colors.surface} accessibilityLabel="Retour" onPress={close} />
         <Text accessibilityRole="header" style={styles.headerTitle}>
-          {TITLES[kind]}
+          Reconnaître l’espèce
         </Text>
       </View>
 
@@ -43,8 +41,8 @@ export function RecognitionScreen({ kind, onAccept }: { kind: CatalogKind; onAcc
           )}
           {uiState.status === 'done' && (
             <View style={styles.badge}>
-              <Ionicons name="sparkles" size={14} color={colors.accent} />
-              <Text style={styles.badgeText}>Analysé par l’agent IA</Text>
+              <Ionicons name={uiState.isDemo ? 'flask-outline' : 'sparkles'} size={14} color={colors.accent} />
+              <Text style={styles.badgeText}>{uiState.isDemo ? 'Exemple (mode démo)' : 'Analysé par l’agent IA'}</Text>
             </View>
           )}
         </View>
@@ -59,10 +57,15 @@ export function RecognitionScreen({ kind, onAccept }: { kind: CatalogKind; onAcc
 
         {uiState.status === 'error' && (
           <View style={styles.sheet}>
+            {uiState.limitReached && <Ionicons name="hourglass-outline" size={28} color={colors.accent} style={styles.limitIcon} />}
             <Text accessibilityRole="alert" style={styles.sheetText}>
               {uiState.message}
             </Text>
-            <PrimaryButton icon="camera-outline" label="Reprendre une photo" onPress={takePhoto} />
+            {uiState.limitReached ? (
+              <PrimaryButton icon="list-outline" label="Choisir dans la liste" onPress={close} />
+            ) : (
+              <PrimaryButton icon="camera-outline" label="Reprendre une photo" onPress={takePhoto} />
+            )}
           </View>
         )}
 
@@ -101,7 +104,12 @@ export function RecognitionScreen({ kind, onAccept }: { kind: CatalogKind; onAcc
               <SecondaryButton icon="camera-outline" label="Reprendre" onPress={takePhoto} flex />
               <PrimaryButton label={`Ajouter ${best.item.name.toLowerCase()}`} onPress={() => accept(best)} flex />
             </View>
-            <Text style={styles.note}>Proposition de l’agent IA, à vérifier. Mode démo : résultats d’exemple.</Text>
+            {uiState.note && !uiState.isDemo && <Text style={styles.agentNote}>« {uiState.note} »</Text>}
+            <Text style={styles.note}>
+              {uiState.isDemo
+                ? 'Mode démo : la photo n’est pas analysée, ce sont des résultats d’exemple.'
+                : 'Proposition de l’agent IA, à vérifier.'}
+            </Text>
           </View>
         )}
       </ScrollView>
@@ -169,6 +177,8 @@ const styles = StyleSheet.create({
   otherChip: { minHeight: 32, justifyContent: 'center', paddingHorizontal: 10, borderRadius: radius.sm, backgroundColor: colors.ground },
   otherText: { fontFamily: fonts.bodySemiBold, fontSize: 13, color: colors.ink },
   actions: { flexDirection: 'row', gap: 10, marginTop: 4 },
+  limitIcon: { alignSelf: 'center' },
+  agentNote: { fontFamily: fonts.body, fontSize: 13, fontStyle: 'italic', color: colors.ink },
   note: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, color: colors.muted },
   primary: {
     minHeight: 48,

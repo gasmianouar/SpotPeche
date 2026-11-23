@@ -34,6 +34,8 @@ export interface FishingForecast {
   readonly model: string | null;
   /** Pourquoi l'IA n'a pas servi (hors connexion, serveur absent…), si c'est le cas. */
   readonly fallbackReason?: string;
+  /** true si la limite gratuite d'analyses IA du jour est atteinte (estimation locale à la place). */
+  readonly freeLimitReached?: boolean;
 }
 
 /** Score 0–100 → niveau affiché. */

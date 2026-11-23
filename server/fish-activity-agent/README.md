@@ -1,9 +1,12 @@
-# Agent IA de Spot : activité des poissons
+# Agents IA de Spot : activité des poissons et reconnaissance photo
 
-Petit serveur (Cloudflare Workers) qui reçoit les conditions d'un spot et demande à **Claude** d'estimer l'activité des poissons heure par heure, ainsi que l'indice de pêche du jour.
+Petit serveur (Cloudflare Workers) qui fait travailler **Claude** pour l'app, avec deux routes :
+- `POST /forecast` : à partir des conditions d'un spot, l'activité des poissons heure par heure et l'indice de pêche du jour ;
+- `POST /recognize` : l'espèce de poisson visible sur une photo, choisie uniquement dans le catalogue de l'app.
 
 ```
-App Spot ──POST /forecast──► ce serveur (garde la clé) ──► API Claude (claude-fable-5-2)
+App Spot ──POST /forecast ──► ce serveur (garde la clé) ──► API Claude (claude-fable-5-2)
+         ──POST /recognize─►
 ```
 
 ## Pourquoi un serveur ?
@@ -49,3 +52,11 @@ Pour diviser le coût par 2 ou par 4 : `MODEL = "claude-opus-5-5"` ou `"claude-s
 
 ## Tests
 Les fonctions de `src/agent.ts` (validation, consigne, lecture de la réponse, clé de cache) sont testées avec le reste du projet : `npx jest` à la racine.
+
+## Reconnaissance photo (`/recognize`)
+- **Entrée** : `{ mediaType, data (photo en base64, 5 Mo max), catalog: [{ id, name, latinName? }] }` (espèces uniquement).
+- **Sortie** : `{ recognized, candidates: [{ id, confidence }] (3 au plus), note, model }`.
+- Les identifiants possibles sont imposés par le schéma JSON (liste `enum` construite à partir du catalogue reçu).
+- Une même photo renvoyée est servie depuis le cache (24 h) : on ne paie pas deux fois.
+- Modèle : `RECOGNITION_MODEL` dans `wrangler.toml` si on veut un modèle différent de `MODEL` (par exemple `claude-sonnet-5-5`, moins cher). Par défaut, c'est le même que `MODEL`.
+- Coût indicatif : quelques centimes par photo.

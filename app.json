@@ -9,7 +9,10 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.gasmianouar.spotpeche",
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": ["comgooglemaps", "waze", "whatsapp", "fb-messenger"]
+      }
     },
     "android": {
       "adaptiveIcon": {

@@ -2,12 +2,13 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 
 import { useDependencies } from '@/core/di/DependenciesProvider';
+import type { NavigationApp, ShareTarget } from '@/core/external/ExternalApps';
 import { useSessionStore } from '@/features/auth/presentation/state/sessionStore';
 
 import type { CatalogKind } from '../../domain/entities/Catalog';
 import type { FishActivity } from '../../domain/entities/Spot';
 import { quoteOf, type MessageQuote, type ReactionEmoji } from '../../domain/entities/SpotMessage';
-import { spotShareText } from '../../domain/services/spotLinks';
+import { openStreetMapUrl, spotShareText } from '../../domain/services/spotLinks';
 import { SpotNotFoundError, type MessageView, type SpotDetail } from '../../domain/usecases/GetSpotDetail';
 import { MESSAGE_MAX_PHOTOS, MessageValidationError } from '../../domain/usecases/PostMessage';
 
@@ -38,6 +39,12 @@ export function useSpotDetailViewModel(spotId: string) {
   const [sendError, setSendError] = useState<string | null>(null);
   /** Augmente à chaque envoi : la vue s'en sert pour défiler jusqu'au dernier message. */
   const [sentCount, setSentCount] = useState(0);
+  // Feuille « Itinéraire vers le spot » (Google Maps ou Waze)
+  const [directionsOpen, setDirectionsOpen] = useState(false);
+  const [directionsNotice, setDirectionsNotice] = useState<string | null>(null);
+  // Feuille « Partager la localisation »
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareNotice, setShareNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -62,13 +69,54 @@ export function useSpotDetailViewModel(spotId: string) {
   const detail = uiState.status === 'ready' ? uiState.detail : null;
   const spot = detail?.spot;
 
+  // Itinéraire : on choisit Google Maps ou Waze, puis trajet complet depuis la position actuelle.
   const openDirections = useCallback(() => {
-    if (spot) directionsService.openDirections(spot.coordinates, spot.name).catch(() => undefined);
-  }, [directionsService, spot]);
+    setDirectionsNotice(null);
+    setDirectionsOpen(true);
+  }, []);
+  const closeDirections = useCallback(() => setDirectionsOpen(false), []);
 
-  const share = useCallback(() => {
-    if (detail) shareService.share(spotShareText(detail.spot, detail.species)).catch(() => undefined);
-  }, [shareService, detail]);
+  const navigateWith = useCallback(
+    async (app: NavigationApp) => {
+      if (!spot) return;
+      try {
+        await directionsService.openDirections(spot.coordinates, app);
+        setDirectionsOpen(false);
+      } catch {
+        setDirectionsNotice('Impossible d’ouvrir l’itinéraire. Vérifiez qu’un navigateur ou l’app est installé.');
+      }
+    },
+    [directionsService, spot],
+  );
+
+  const openShare = useCallback(() => {
+    setShareNotice(null);
+    setShareOpen(true);
+  }, []);
+  const closeShare = useCallback(() => setShareOpen(false), []);
+
+  const shareTo = useCallback(
+    async (target: ShareTarget) => {
+      if (!detail) return;
+      const message = spotShareText(detail.spot, detail.species);
+      try {
+        const outcome = await shareService.shareTo(target, message, openStreetMapUrl(detail.spot.coordinates));
+        if (outcome === 'fallback') {
+          // L'app n'est pas installée : une autre solution s'est ouverte, on le dit.
+          setShareNotice(
+            target === 'whatsapp'
+              ? 'WhatsApp n’est pas installé : ouverture de WhatsApp Web.'
+              : 'Messenger n’est pas installé : choisissez une autre app.',
+          );
+        } else {
+          setShareOpen(false);
+        }
+      } catch {
+        setShareNotice('Impossible de partager pour le moment. Réessayez.');
+      }
+    },
+    [shareService, detail],
+  );
 
   const openWeather = useCallback(() => {
     if (!spot) return;
@@ -166,7 +214,16 @@ export function useSpotDetailViewModel(spotId: string) {
     retry: load,
     back: () => router.back(),
     openDirections,
-    share,
+    directionsOpen,
+    directionsNotice,
+    closeDirections,
+    navigateWith,
+    shareOpen,
+    shareNotice,
+    openShare,
+    closeShare,
+    shareTo,
+    shareLink: spot ? openStreetMapUrl(spot.coordinates) : '',
     openWeather,
     addItems,
     toggleReactions,

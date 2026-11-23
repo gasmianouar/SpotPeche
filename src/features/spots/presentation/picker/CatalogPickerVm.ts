@@ -23,7 +23,8 @@ export interface CatalogPickerVm {
   readonly isSaving: boolean;
   readonly error: string | null;
   toggle(id: string): void;
-  recognize(): void;
+  /** Reconnaître par photo : seulement pour les espèces (absent pour les appâts). */
+  readonly recognize?: () => void;
   confirm(): void;
   cancel(): void;
 }

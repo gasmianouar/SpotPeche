@@ -5,7 +5,7 @@ import { Stack } from 'expo-router';
  *   /nouveau-spot                → formulaire
  *   /nouveau-spot/especes        → choix des espèces
  *   /nouveau-spot/appats         → choix des appâts
- *   /nouveau-spot/reconnaissance → photo + agent IA (?type=especes|appats)
+ *   /nouveau-spot/reconnaissance → photo de la prise → espèce reconnue
  */
 export default function NewSpotLayout() {
   return <Stack screenOptions={{ headerShown: false }} />;

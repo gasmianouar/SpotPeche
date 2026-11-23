@@ -85,11 +85,8 @@ export function useSpotItemsPickerViewModel(spotId: string, kind: CatalogKind): 
     toggle: (id) => {
       if (!existingIds.includes(id)) toggle(id);
     },
-    recognize: () =>
-      router.push({
-        pathname: '/spot/[id]/reconnaissance',
-        params: { id: spotId, type: kind === 'species' ? 'especes' : 'appats' },
-      }),
+    recognize:
+      kind === 'species' ? () => router.push({ pathname: '/spot/[id]/reconnaissance', params: { id: spotId } }) : undefined,
     confirm,
     cancel: close,
   };

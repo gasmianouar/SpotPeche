@@ -8,8 +8,10 @@ import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 import { IconButton } from '@/shared/ui/IconButton';
 
 import { CreatorCard } from './components/CreatorCard';
+import { DirectionsSheet } from './components/DirectionsSheet';
 import { MessageBubble } from './components/MessageBubble';
 import { MessageComposer } from './components/MessageComposer';
+import { ShareLocationSheet } from './components/ShareLocationSheet';
 import { SpotItemsCard } from './components/SpotItemsCard';
 import { useSpotDetailViewModel } from './useSpotDetailViewModel';
 
@@ -79,7 +81,7 @@ export function SpotDetailScreen({ spotId }: { spotId: string }) {
               votes={uiState.detail.activityVotes}
               myVote={uiState.detail.myVote}
               onDirections={vm.openDirections}
-              onShare={vm.share}
+              onShare={vm.openShare}
               onVote={vm.vote}
             />
             <SpotItemsCard species={uiState.detail.species} baits={uiState.detail.baits} onAdd={vm.addItems} />
@@ -120,6 +122,25 @@ export function SpotDetailScreen({ spotId }: { spotId: string }) {
             onSend={vm.send}
           />
         </KeyboardAvoidingView>
+      )}
+
+      <DirectionsSheet
+        visible={vm.directionsOpen}
+        notice={vm.directionsNotice}
+        onPick={vm.navigateWith}
+        onClose={vm.closeDirections}
+      />
+
+      {uiState.status === 'ready' && (
+        <ShareLocationSheet
+          visible={vm.shareOpen}
+          ownerName={uiState.detail.spot.ownerName}
+          coordinates={uiState.detail.spot.coordinates}
+          link={vm.shareLink}
+          notice={vm.shareNotice}
+          onShare={vm.shareTo}
+          onClose={vm.closeShare}
+        />
       )}
     </SafeAreaView>
   );

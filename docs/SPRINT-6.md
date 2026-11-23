@@ -1,4 +1,4 @@
-# Sprint 6 : l'agent IA de l'activité des poissons
+# Sprint 6 : les agents IA (activité des poissons, reconnaissance photo)
 
 ## Ce qui a changé
 L'écran **Météo du spot** (icône météo de la fiche) devient un écran dédié, compact, aux coordonnées GPS du spot :
@@ -64,5 +64,50 @@ Il faut mettre le serveur en ligne une fois (compte Cloudflare gratuit et clé d
 ```bash
 npx tsc --noEmit                               # types de l'app
 npx tsc --noEmit -p server/fish-activity-agent # types du serveur
-npx jest                                       # 96 tests
+npx jest                                       # tous les tests
 ```
+
+## Agent de reconnaissance des espèces
+Quand on prend en photo un poisson (création d'un spot, ou « + Ajouter » sur la fiche), la photo est analysée par Claude, qui sait lire les images.
+La reconnaissance des **appâts** a été retirée : on les choisit dans la liste illustrée.
+
+```
+RecognitionScreen ─► useRecognitionViewModel ─► RecognizeFromPhoto ─► ImageRecognizer (port)
+                                                                        ├► AgentImageRecognizer ──► serveur /recognize ──► Claude
+                                                                        └► DemoImageRecognizer (sans serveur, affichée « mode démo »)
+```
+
+**Fiabilité**
+- L'app envoie son **catalogue des espèces** (identifiants et noms) avec la photo. Le schéma JSON imposé à Claude n'accepte **que ces identifiants** (liste `enum`) : il ne peut pas inventer d'espèce.
+- **Consignes d'expert** : critères anatomiques et pièges classiques (perche ou sandre, brochet ou sandre, carpe ou carassin…).
+- **Le droit de dire « je ne sais pas »** : photo floue, ou élément absent du catalogue → `recognized: false`. L'écran affiche alors la raison donnée par l'agent (« Photo trop floue », « Ressemble à une brème, absente du catalogue »).
+- **Confiance calibrée** : 90 % et plus seulement si les critères sont bien visibles, et un total des confiances de 100 % au plus.
+- **Double vérification** : le serveur puis l'app (`parseAgentReply`, puis le cas d'usage) écartent tout ce qui est hors catalogue, mal formé ou en double.
+- **Pas de faux résultat** : si le serveur ne répond pas, l'écran le dit (« Reconnaissance indisponible… choisissez dans la liste ») au lieu de montrer la démo.
+
+**Photo**
+- Elle est prise un peu compressée (`quality: 0.5`) : l'envoi est plus rapide.
+- Elle est lue en base64 avec `fetch` + `FileReader` (`FetchPhotoReader`), sans nouvelle librairie native.
+- Limite : 5 Mo par image (limite de l'API Claude), vérifiée par l'app et par le serveur.
+
+**Coût** : quelques centimes par photo. Si la même photo est renvoyée (nouvel essai), le serveur répond depuis son cache sans repayer.
+
+**Sans serveur** (`EXPO_PUBLIC_SPOT_AI_URL` vide) : la démo reste branchée, et l'écran affiche clairement « Exemple (mode démo) ».
+
+**Tests** : `RecognizeFromPhoto.test.ts`, `AgentImageRecognizer.test.ts` (envoi, photo trop lourde, panne, réponses mal formées) et, côté serveur, `recognize.test.ts` (validation, schéma limité au catalogue, consignes, lecture de la réponse).
+
+## Application gratuite : la limite d'IA du jour
+L'application est **gratuite**. Les deux agents IA appellent l'API Claude, qui est payante pour nous. Ils sont donc **limités chaque jour, par téléphone** (`FREE_DAILY_LIMITS` dans `features/freeQuota/domain/FreeQuota.ts`) :
+
+| Fonction | Gratuit par jour | Au-delà |
+|---|---|---|
+| Analyse IA de l'activité des poissons | 5 | Estimation locale (gratuite), avec le message de la limite |
+| Reconnaissance de l'espèce par photo | 5 | Message de la limite et bouton « Choisir dans la liste ». La photo n'est pas envoyée |
+
+Le message annonce que l'usage illimité fera partie de la **version payante (bientôt disponible)**. Aucun paiement n'est encore en place.
+
+- **Compteur** : table SQLite `ai_usage` (migration 6), une ligne par fonction et par jour. Il repart à zéro à minuit.
+- **Seules les vraies analyses réussies sont décomptées.** Ni le cache, ni le repli local, ni une erreur ne consomment la limite.
+- **Décorateurs** : `QuotaLimitedFishActivityAdvisor` et `QuotaLimitedImageRecognizer` enveloppent les agents sans les modifier (le O de SOLID).
+- **Sans serveur IA**, rien n'est payant : l'algorithme local et la démo de reconnaissance (affichée comme telle) fonctionnent sans limite.
+- **Limite du système** : le compteur est sur le téléphone. Réinstaller l'app le remet à zéro. Pour une vraie protection des coûts, il faudra un jour un compteur côté serveur (avec des comptes utilisateurs).

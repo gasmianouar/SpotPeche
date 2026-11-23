@@ -45,8 +45,8 @@ export function useCatalogPickerViewModel(kind: CatalogKind): CatalogPickerVm {
     isSaving: false,
     error: null,
     toggle: (id: string) => toggleItem(kind, id),
-    recognize: () =>
-      router.push({ pathname: '/nouveau-spot/reconnaissance', params: { type: kind === 'species' ? 'especes' : 'appats' } }),
+    // Reconnaissance par photo : espèces seulement.
+    recognize: kind === 'species' ? () => router.push('/nouveau-spot/reconnaissance') : undefined,
     confirm: () => router.back(),
     cancel: () => router.back(),
   };

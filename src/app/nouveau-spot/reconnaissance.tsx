@@ -1,13 +1,9 @@
-import { useLocalSearchParams } from 'expo-router';
-
 import { useSpotDraftStore } from '@/features/spots/presentation/create/spotDraftStore';
 import { RecognitionScreen } from '@/features/spots/presentation/recognition/RecognitionScreen';
 
-// Route « /nouveau-spot/reconnaissance?type=especes|appats ».
+// Route « /nouveau-spot/reconnaissance » : reconnaître l'espèce sur une photo.
 export default function RecognitionRoute() {
-  const { type } = useLocalSearchParams<{ type?: string }>();
-  const kind = type === 'appats' ? 'bait' : 'species';
   const addItem = useSpotDraftStore((s) => s.addItem);
-  // « Ajouter » coche la proposition dans le brouillon du spot en création.
-  return <RecognitionScreen kind={kind} onAccept={(id) => addItem(kind, id)} />;
+  // « Ajouter » coche l'espèce dans le brouillon du spot en création.
+  return <RecognitionScreen onAccept={(id) => addItem('species', id)} />;
 }

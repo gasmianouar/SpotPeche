@@ -10,20 +10,16 @@ import { catalogImage } from '../catalog/catalogImages';
 import type { CatalogPickerVm } from './CatalogPickerVm';
 
 /** Textes propres à chaque catalogue : le composant reste le même pour les deux. */
-const COPY: Record<CatalogKind, { title: string; intro: string; search: string; recognize: string; recognizeHint: string }> = {
+const COPY: Record<CatalogKind, { title: string; intro: string; search: string }> = {
   species: {
     title: 'Espèces présentes',
     intro: 'Touchez les espèces vues ou pêchées sur ce spot, puis validez avec OK.',
     search: 'Rechercher une espèce',
-    recognize: "Reconnaître l'espèce",
-    recognizeHint: "Pas sûr de l'espèce ? Photographiez votre prise : l'agent IA l'identifie et la sélectionne.",
   },
   bait: {
     title: 'Appâts utilisés',
     intro: 'Touchez les appâts et leurres qui fonctionnent sur ce spot, puis validez avec OK.',
     search: 'Rechercher un appât',
-    recognize: "Reconnaître l'appât",
-    recognizeHint: "Pas sûr du nom ? Photographiez l'appât ou le leurre : l'agent IA le reconnaît et le sélectionne.",
   },
 };
 
@@ -61,16 +57,20 @@ export function CatalogPickerScreen({ kind, vm }: { kind: CatalogKind; vm: Catal
                 style={styles.searchInput}
               />
             </View>
-            <Pressable
-              accessibilityRole="button"
-              onPress={vm.recognize}
-              style={({ pressed }) => [styles.recognize, pressed && styles.pressed]}
-            >
-              <Ionicons name="camera-outline" size={20} color={colors.surface} />
-              <Text style={styles.recognizeLabel}>{copy.recognize}</Text>
-              <Ionicons name="sparkles" size={16} color={colors.accent} />
-            </Pressable>
-            <Text style={styles.hint}>{copy.recognizeHint}</Text>
+            {vm.recognize && (
+              <>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={vm.recognize}
+                  style={({ pressed }) => [styles.recognize, pressed && styles.pressed]}
+                >
+                  <Ionicons name="camera-outline" size={20} color={colors.surface} />
+                  <Text style={styles.recognizeLabel}>Reconnaître l’espèce</Text>
+                  <Ionicons name="sparkles" size={16} color={colors.accent} />
+                </Pressable>
+                <Text style={styles.hint}>Pas sûr de l’espèce ? Photographiez votre prise : l’agent IA l’identifie et la sélectionne.</Text>
+              </>
+            )}
           </View>
         }
         ListEmptyComponent={<Text style={styles.empty}>Aucun résultat pour « {vm.query} ».</Text>}

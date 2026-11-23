@@ -33,11 +33,17 @@ export function CreatorCard({ spot, votes, myVote, onDirections, onShare, onVote
         </View>
       </View>
       <View style={styles.actions}>
-        <Pressable accessibilityRole="button" onPress={onDirections} style={({ pressed }) => [styles.primary, pressed && styles.pressed]}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Itinéraire vers le spot"
+          accessibilityHint="Choisir Google Maps ou Waze"
+          onPress={onDirections}
+          style={({ pressed }) => [styles.primary, pressed && styles.pressed]}
+        >
           <Ionicons name="navigate" size={18} color={colors.surface} />
           <Text style={styles.primaryLabel}>Itinéraire</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" onPress={onShare} style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Partager la localisation" onPress={onShare} style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
           <Ionicons name="share-social-outline" size={18} color={colors.primary} />
           <Text style={styles.secondaryLabel}>Partager</Text>
         </Pressable>

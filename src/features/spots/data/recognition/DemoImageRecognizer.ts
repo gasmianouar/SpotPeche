@@ -1,5 +1,4 @@
-import type { CatalogKind } from '../../domain/entities/Catalog';
-import type { ImageRecognizer, RecognitionCandidate } from '../../domain/recognition/ImageRecognizer';
+import type { ImageRecognizer, RecognitionOutcome } from '../../domain/recognition/ImageRecognizer';
 
 /**
  * Reconnaissance de DÉMONSTRATION : elle ne regarde pas vraiment la photo.
@@ -7,26 +6,22 @@ import type { ImageRecognizer, RecognitionCandidate } from '../../domain/recogni
  * Elle simule le temps de réponse d'un agent IA et renvoie des propositions fixes,
  * pour pouvoir construire et tester tout le parcours dès maintenant.
  *
- * Le vrai agent IA (un modèle de vision) sera appelé depuis un SERVEUR, jamais
- * directement depuis l'app : sinon la clé d'API serait lisible dans l'application.
- * Il suffira d'écrire une classe `AgentImageRecognizer implements ImageRecognizer`
- * et de la brancher dans core/di/container.ts.
+ * Utilisée tant que le serveur de l'agent IA n'est pas configuré
+ * (EXPO_PUBLIC_SPOT_AI_URL vide) : l'écran affiche alors « Mode démo ».
+ * Le vrai agent est `AgentImageRecognizer`.
  */
 export class DemoImageRecognizer implements ImageRecognizer {
+  readonly isDemo = true;
+
   constructor(private readonly delayMs = 1200) {}
 
-  async recognize(kind: CatalogKind, _photoUri: string): Promise<RecognitionCandidate[]> {
+  async recognize(_photoUri: string): Promise<RecognitionOutcome> {
     await new Promise((resolve) => setTimeout(resolve, this.delayMs));
-    return kind === 'species'
-      ? [
-          { id: 'brochet', confidence: 0.92 },
-          { id: 'sandre', confidence: 0.05 },
-          { id: 'blackbass', confidence: 0.02 },
-        ]
-      : [
-          { id: 'shad', confidence: 0.88 },
-          { id: 'crank', confidence: 0.09 },
-          { id: 'spoon', confidence: 0.03 },
-        ];
+    const candidates = [
+      { id: 'brochet', confidence: 0.92 },
+      { id: 'sandre', confidence: 0.05 },
+      { id: 'blackbass', confidence: 0.02 },
+    ];
+    return { candidates, note: 'Résultat d’exemple : la photo n’est pas analysée en mode démo.' };
   }
 }

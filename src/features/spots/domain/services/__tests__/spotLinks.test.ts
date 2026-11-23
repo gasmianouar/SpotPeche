@@ -1,6 +1,6 @@
 import { aSpot } from '../../../testing/spotTestData';
 import { quoteOf } from '../../entities/SpotMessage';
-import { openStreetMapUrl, spotShareText } from '../spotLinks';
+import { googleMapsDirectionsUrl, openStreetMapUrl, spotShareText, wazeNavigationUrl } from '../spotLinks';
 
 describe('liens et textes du spot', () => {
   it('fabrique un lien OpenStreetMap vers le point', () => {
@@ -9,10 +9,21 @@ describe('liens et textes du spot', () => {
     );
   });
 
-  it('partage les espèces et le lien', () => {
-    const text = spotShareText(aSpot(), [{ id: 'brochet', name: 'Brochet' }]);
+  it('fabrique un lien Waze qui lance la navigation depuis la position actuelle', () => {
+    expect(wazeNavigationUrl({ latitude: 48.7803, longitude: 2.4455 })).toBe(
+      'https://waze.com/ul?ll=48.780300,2.445500&navigate=yes',
+    );
+  });
 
+  it('partage le créateur, les espèces, la position, Google Maps, Waze et la carte', () => {
+    const spot = aSpot();
+    const text = spotShareText(spot, [{ id: 'brochet', name: 'Brochet' }]);
+
+    expect(text).toContain(spot.ownerName);
     expect(text).toContain('Espèces : Brochet');
+    expect(text).toContain('GPS : ');
+    expect(text).toContain(googleMapsDirectionsUrl(spot.coordinates));
+    expect(text).toContain(wazeNavigationUrl(spot.coordinates));
     expect(text).toContain('openstreetmap.org');
   });
 

@@ -56,6 +56,13 @@ export function FishActivityChart({ forecast, isAnalyzing }: Props) {
         </Text>
       )}
 
+      {forecast.freeLimitReached && !isAnalyzing && (
+        <View accessibilityRole="alert" style={styles.limit}>
+          <Ionicons name="hourglass-outline" size={16} color="#8A4B06" />
+          <Text style={styles.limitText}>{forecast.fallbackReason}</Text>
+        </View>
+      )}
+
       <View style={styles.source}>
         {isAnalyzing ? (
           <>
@@ -73,7 +80,8 @@ export function FishActivityChart({ forecast, isAnalyzing }: Props) {
           <>
             <Ionicons name="calculator-outline" size={14} color={colors.muted} />
             <Text style={styles.sourceText}>
-              {forecast.fallbackReason ?? 'Estimation locale.'} Calculée selon la lumière, la pression, le vent et la lune.
+              {forecast.freeLimitReached ? 'Estimation locale.' : (forecast.fallbackReason ?? 'Estimation locale.')} Calculée selon la
+              lumière, la pression, le vent et la lune.
             </Text>
           </>
         )}
@@ -96,6 +104,8 @@ const styles = StyleSheet.create({
   hourBest: { color: colors.mine, fontFamily: fonts.bodyBold },
   best: { fontFamily: fonts.body, fontSize: 13, color: colors.ink },
   bestStrong: { fontFamily: fonts.bodyBold },
+  limit: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, padding: 10, borderRadius: radius.md, backgroundColor: '#FDF1E1' },
+  limitText: { flex: 1, fontFamily: fonts.bodySemiBold, fontSize: 12, lineHeight: 17, color: '#8A4B06' },
   source: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   sourceText: { flex: 1, fontFamily: fonts.body, fontSize: 11, lineHeight: 15, color: colors.muted },
 });
