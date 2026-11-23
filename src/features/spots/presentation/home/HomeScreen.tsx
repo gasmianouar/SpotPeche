@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useIsFocused } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useRef } from 'react';
@@ -19,7 +20,8 @@ import { DEFAULT_CENTER, useHomeViewModel } from './useHomeViewModel';
  * La barre Accueil / Météo du bas est gérée par app/(tabs)/_layout.tsx.
  */
 export function HomeScreen() {
-  const { uiState, filter, locateMe, openMenu, createSpot, openSpot, showAllSpots } = useHomeViewModel();
+  const { uiState, filter, savedSpot, locateMe, openMenu, createSpot, openSpot, showAllSpots } =
+    useHomeViewModel();
   const onlyMine = filter === 'mine';
   const isEmpty = !uiState.isLoading && !uiState.errorMessage && uiState.spots.length === 0;
 
@@ -40,7 +42,8 @@ export function HomeScreen() {
         {isFocused && (
           <SpotMap
             spots={uiState.spots}
-            initialCamera={cameraRef.current}
+            // Après un enregistrement, la carte (recréée au retour) s'ouvre centrée sur le nouveau spot.
+            initialCamera={savedSpot ? { center: savedSpot.coordinates, zoom: 15 } : cameraRef.current}
             userPosition={uiState.userPosition}
             onSpotPress={openSpot}
             onCameraChange={(camera) => {
@@ -52,6 +55,14 @@ export function HomeScreen() {
         <View style={styles.topOverlay} pointerEvents="box-none">
           {onlyMine && <FilterChip label={`Mes spots (${uiState.spots.length})`} onClear={showAllSpots} />}
 
+          {savedSpot && (
+            <View accessibilityRole="alert" style={[styles.banner, styles.savedBanner]}>
+              <Ionicons name="checkmark-circle" size={20} color={colors.surface} />
+              <Text style={[styles.bannerText, styles.savedText]}>
+                <Text style={styles.savedStrong}>Spot enregistré</Text> · ajouté à Mes spots
+              </Text>
+            </View>
+          )}
           {uiState.isLoading && (
             <View style={styles.banner}>
               <ActivityIndicator color={colors.primary} />
@@ -114,6 +125,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     ...floating,
   },
+  savedBanner: { backgroundColor: colors.mine },
+  savedText: { color: colors.surface },
+  savedStrong: { fontFamily: fonts.bodyBold },
   bannerText: { flexShrink: 1, fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.ink, textAlign: 'center' },
   legend: { position: 'absolute', left: spacing.md, bottom: spacing.lg },
   locate: {

@@ -5,5 +5,7 @@ export type AuthProvider = 'facebook' | 'apple';
 export interface User {
   readonly id: string;
   readonly displayName: string;
+  /** Photo de profil fournie par Facebook / Apple (null si aucune). */
+  readonly photoUrl: string | null;
   readonly provider: AuthProvider;
 }

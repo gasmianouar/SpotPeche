@@ -34,6 +34,8 @@ export default function RootLayout() {
         <Stack.Protected guard={isSignedIn}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="appats" />
+          <Stack.Screen name="nouveau-spot" />
+          <Stack.Screen name="spot/[id]" />
         </Stack.Protected>
         <Stack.Protected guard={!isSignedIn}>
           <Stack.Screen name="login" />

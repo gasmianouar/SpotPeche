@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, T
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
+import { IconButton } from '@/shared/ui/IconButton';
 
 import { Card } from './components/Card';
 import { CurrentWeatherCard } from './components/CurrentWeatherCard';
@@ -13,28 +14,52 @@ import { HourlyForecastStrip } from './components/HourlyForecastStrip';
 import { useWeatherViewModel } from './useWeatherViewModel';
 import { formatClock } from './weatherFormat';
 
+interface Props {
+  /** Météo d'un lieu précis (un spot) ; sans coordonnées : là où je suis. */
+  latitude?: number;
+  longitude?: number;
+  /** Affiche une flèche retour (ouverture depuis la fiche d'un spot). */
+  onBack?: () => void;
+}
+
 /** VUE de l'écran Météo (écran 4 de la maquette). */
-export function WeatherScreen() {
-  const { uiState, refresh } = useWeatherViewModel();
+export function WeatherScreen({ latitude, longitude, onBack }: Props = {}) {
+  const { uiState, refresh } = useWeatherViewModel(latitude, longitude);
   const weather = uiState.status === 'success' ? uiState.weather : null;
+  // Météo d'un spot : on montre ses coordonnées GPS, et l'indice de pêche passe sous l'horaire.
+  const isSpot = latitude !== undefined && longitude !== undefined;
+  const placeLabel = isSpot
+    ? `GPS du spot · ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+    : weather
+      ? weather.place.name
+      : 'Localisation…';
 
   return (
     <SafeAreaView edges={['top']} style={styles.screen}>
       <StatusBar style="dark" />
-      <View style={styles.header}>
-        <Text accessibilityRole="header" style={styles.title}>
-          Météo
-        </Text>
-        <View style={styles.placeRow}>
-          <Ionicons name={weather?.place.isFallback ? 'location-outline' : 'navigate'} size={14} color={colors.muted} />
-          <Text style={styles.place}>{weather ? weather.place.name : 'Localisation…'}</Text>
+      <View style={[styles.header, onBack && styles.headerWithBack]}>
+        {onBack && <IconButton icon="chevron-back" accessibilityLabel="Retour" onPress={onBack} />}
+        <View>
+          <Text accessibilityRole="header" style={styles.title}>
+            {onBack ? 'Météo du spot' : 'Météo'}
+          </Text>
+          <View style={styles.placeRow}>
+            <Ionicons
+              name={isSpot ? 'location' : weather?.place.isFallback ? 'location-outline' : 'navigate'}
+              size={14}
+              color={colors.muted}
+            />
+            <Text style={styles.place} numberOfLines={1}>
+              {placeLabel}
+            </Text>
+          </View>
         </View>
       </View>
 
       {uiState.status === 'loading' && (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.message}>Récupération de la météo autour de vous…</Text>
+          <Text style={styles.message}>{onBack ? 'Récupération de la météo du spot…' : 'Récupération de la météo autour de vous…'}</Text>
         </View>
       )}
 
@@ -63,8 +88,10 @@ export function WeatherScreen() {
             </Text>
           )}
           <CurrentWeatherCard current={weather.forecast.current} />
-          <FishingIndexCard index={weather.fishingIndex} />
+          {!isSpot && <FishingIndexCard index={weather.fishingIndex} />}
           <HourlyForecastStrip hours={weather.forecast.hourly} />
+          {isSpot && <FishingIndexCard index={weather.fishingIndex} />}
+          {/* À venir : « Activité des poissons heure par heure », calculée par un agent IA. */}
 
           <View style={styles.twoColumns}>
             {weather.forecast.daily[0] && (
@@ -99,6 +126,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
+  headerWithBack: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: spacing.sm, paddingHorizontal: spacing.md },
   title: { fontFamily: fonts.displayBold, fontSize: 20, color: colors.ink },
   placeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   place: { fontFamily: fonts.body, fontSize: 13, color: colors.muted },

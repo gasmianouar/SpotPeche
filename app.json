@@ -35,6 +35,13 @@
         }
       ],
       "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Spot utilise l'appareil photo pour reconnaître une espèce ou un appât.",
+          "photosPermission": "Spot accède à vos photos pour illustrer vos spots."
+        }
+      ],
       "./plugins/withLowMemoryGradle"
     ],
     "scheme": "spotpeche",

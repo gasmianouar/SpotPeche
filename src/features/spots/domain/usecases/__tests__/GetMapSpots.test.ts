@@ -7,6 +7,14 @@ const spot = (id: string, ownerId: string): Spot => ({
   name: `Spot ${id}`,
   ownerId,
   coordinates: { latitude: 48.7, longitude: 2.4 },
+  ownerName: '',
+  ownerPhotoUrl: null,
+  speciesIds: [],
+  baitIds: [],
+  activity: null,
+  description: '',
+  photoUris: [],
+  createdAt: 0,
 });
 
 describe('GetMapSpots', () => {

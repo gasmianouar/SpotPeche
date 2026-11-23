@@ -14,7 +14,7 @@ export class FakeAuthRepository implements AuthRepository {
 
   async signIn(provider: AuthProvider): Promise<User> {
     await new Promise((resolve) => setTimeout(resolve, this.delayMs));
-    return { id: 'me', displayName: 'Pêcheur démo', provider };
+    return { id: 'me', displayName: 'Pêcheur démo', photoUrl: null, provider };
   }
 
   async signOut(): Promise<void> {

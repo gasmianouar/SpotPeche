@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 import { createDependencies, type Dependencies } from './container';
 
@@ -16,8 +16,10 @@ export function DependenciesProvider({
   /** Permet d'injecter des faux dans les tests. */
   dependencies?: Dependencies;
 }) {
-  // useState(() => …) : créé une seule fois, au premier rendu.
-  const [value] = useState(() => dependencies ?? createDependencies());
+  // Créé une seule fois (tant que `dependencies` ne change pas).
+  // useMemo plutôt que useState : en développement, Fast Refresh recalcule les useMemo,
+  // donc un nouveau cas d'usage ajouté dans container.ts est pris en compte sans relancer l'app.
+  const value = useMemo(() => dependencies ?? createDependencies(), [dependencies]);
   return <DependenciesContext.Provider value={value}>{children}</DependenciesContext.Provider>;
 }
 

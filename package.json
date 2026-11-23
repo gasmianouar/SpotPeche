@@ -11,6 +11,7 @@
     "expo-constants": "~58.0.16",
     "expo-dev-client": "~58.0.21",
     "expo-font": "~58.0.12",
+    "expo-image-picker": "~58.0.10",
     "expo-linking": "~58.0.17",
     "expo-location": "~58.0.22",
     "expo-router": "~58.0.32",
@@ -44,6 +45,6 @@
     "preset": "jest-expo"
   },
   "overrides": {
-    "react-dom": "$react"
+    "react-dom": "19.3.0"
   }
 }

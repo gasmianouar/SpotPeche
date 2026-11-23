@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 
@@ -29,9 +29,12 @@ export function useHomeViewModel() {
   const userId = useSessionStore((state) => state.user?.id ?? '');
   const openMenu = useDrawerStore((state) => state.open);
 
-  // Le filtre vient de l'URL (/?filter=mine), posé par le menu « Mes spots ».
-  const params = useLocalSearchParams<{ filter?: string }>();
+  // Paramètres de l'URL :
+  // - filter=mine : posé par le menu « Mes spots » ;
+  // - savedSpotId, lat, lon : posés par l'écran « Nouveau spot » après l'enregistrement.
+  const params = useLocalSearchParams<{ filter?: string; savedSpotId?: string; lat?: string; lon?: string }>();
   const filter: SpotFilter = params.filter === 'mine' ? 'mine' : 'all';
+  const savedSpot = toSavedSpot(params);
 
   const [uiState, setUiState] = useState<HomeUiState>({
     isLoading: true,
@@ -40,27 +43,44 @@ export function useHomeViewModel() {
     userPosition: null,
   });
 
-  // useEffect : exécuté après l'affichage, et à nouveau si userId ou filter change.
+  // useFocusEffect : exécuté chaque fois que l'accueil redevient visible
+  // (au démarrage, mais aussi au retour de « Nouveau spot » → le nouveau marqueur apparaît).
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false; // évite de mettre à jour un écran déjà quitté
+      setUiState((s) => ({ ...s, isLoading: true, errorMessage: null }));
+      getMapSpots
+        .execute(userId, filter)
+        .then((spots) => {
+          if (!cancelled) setUiState((s) => ({ ...s, isLoading: false, spots }));
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setUiState((s) => ({ ...s, isLoading: false, errorMessage: 'Impossible de charger les spots.' }));
+          }
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [getMapSpots, userId, filter]),
+  );
+
+  // Bandeau « Spot enregistré » : visible tant que les paramètres sont dans l'URL.
+  // Après 4 secondes on les efface : le bandeau disparaît (la carte, elle, reste où elle est).
+  const savedSpotId = savedSpot?.id;
   useEffect(() => {
-    let cancelled = false; // évite de mettre à jour un écran déjà fermé
-    setUiState((s) => ({ ...s, isLoading: true, errorMessage: null }));
-    getMapSpots
-      .execute(userId, filter)
-      .then((spots) => {
-        if (!cancelled) setUiState((s) => ({ ...s, isLoading: false, spots }));
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setUiState((s) => ({ ...s, isLoading: false, errorMessage: 'Impossible de charger les spots.' }));
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [getMapSpots, userId, filter]);
+    if (!savedSpotId) return;
+    const timer = setTimeout(() => router.setParams({ savedSpotId: undefined, lat: undefined, lon: undefined }), 4000);
+    return () => clearTimeout(timer);
+  }, [savedSpotId, router]);
 
   const locateMe = useCallback(async () => {
-    const position = await locationService.getCurrentPosition();
+    // Sans try/catch, une localisation coupée faisait planter la promesse (« Uncaught in promise »).
+    const position = await locationService.getCurrentPosition().catch(() => undefined);
+    if (position === undefined) {
+      Alert.alert('Position indisponible', 'Activez la localisation du téléphone, puis réessayez.');
+      return;
+    }
     if (!position) {
       Alert.alert('Position indisponible', 'Autorisez la localisation dans les réglages pour centrer la carte sur vous.');
       return;
@@ -71,10 +91,24 @@ export function useHomeViewModel() {
   /** Quitte le mode « Mes spots » et réaffiche tous les spots. */
   const showAllSpots = useCallback(() => router.setParams({ filter: 'all' }), [router]);
 
-  // Écrans prévus dans les prochains sprints : on affiche un message en attendant.
-  const comingSoon = (feature: string) => Alert.alert(feature, 'Disponible dans un prochain sprint.');
-  const createSpot = () => comingSoon('Création de spot');
-  const openSpot = (mapSpot: MapSpot) => comingSoon(mapSpot.spot.name);
+  /** Bouton « + » : ouvre le parcours de création. */
+  const createSpot = () => router.push('/nouveau-spot');
 
-  return { uiState, filter, locateMe, openMenu, createSpot, openSpot, showAllSpots };
+  /** Toucher un marqueur ouvre la fiche du spot. */
+  const openSpot = (mapSpot: MapSpot) => router.push({ pathname: '/spot/[id]', params: { id: mapSpot.spot.id } });
+
+  return { uiState, filter, savedSpot, locateMe, openMenu, createSpot, openSpot, showAllSpots };
+}
+
+export interface SavedSpot {
+  id: string;
+  coordinates: Coordinates;
+}
+
+/** Lit les paramètres posés après un enregistrement (ce sont des textes dans l'URL). */
+function toSavedSpot(params: { savedSpotId?: string; lat?: string; lon?: string }): SavedSpot | null {
+  const latitude = Number(params.lat);
+  const longitude = Number(params.lon);
+  if (!params.savedSpotId || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+  return { id: params.savedSpotId, coordinates: { latitude, longitude } };
 }

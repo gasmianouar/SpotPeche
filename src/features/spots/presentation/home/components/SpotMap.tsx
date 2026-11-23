@@ -1,6 +1,6 @@
 import { Camera, Map, Marker, type CameraRef, type ViewState } from '@maplibre/maplibre-react-native';
 import { useEffect, useRef } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
 import { colors } from '@/core/theme/tokens';
 import type { Coordinates } from '@/shared/domain/Coordinates';
@@ -74,15 +74,22 @@ export function SpotMap({ spots, initialCamera, userPosition, onSpotPress, onCam
       />
 
       {spots.map((mapSpot) => (
-        <Marker key={mapSpot.spot.id} id={mapSpot.spot.id} lngLat={toLngLat(mapSpot.spot.coordinates)} anchor="bottom">
-          <Pressable
+        // Le toucher se règle sur le Marker lui-même : sur Android, la vue enfant
+        // est posée sur la carte par MapLibre et ne reçoit pas les touchers (un Pressable n'y réagit pas).
+        <Marker
+          key={mapSpot.spot.id}
+          id={mapSpot.spot.id}
+          lngLat={toLngLat(mapSpot.spot.coordinates)}
+          anchor="bottom"
+          onPress={() => onSpotPress(mapSpot)}
+        >
+          <View
+            accessible
             accessibilityRole="button"
             accessibilityLabel={`${mapSpot.isMine ? 'Mon spot' : 'Spot de la communauté'} : ${mapSpot.spot.name}`}
-            hitSlop={6}
-            onPress={() => onSpotPress(mapSpot)}
           >
             <Image source={mapSpot.isMine ? PIN_MINE : PIN_COMMUNITY} style={styles.pin} />
-          </Pressable>
+          </View>
         </Marker>
       ))}
 

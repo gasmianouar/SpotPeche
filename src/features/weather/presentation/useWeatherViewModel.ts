@@ -14,14 +14,18 @@ export type WeatherUiState =
   | { status: 'error'; message: string }
   | { status: 'success'; weather: LocalWeather; isRefreshing: boolean };
 
-/** VIEWMODEL de l'écran Météo. */
-export function useWeatherViewModel() {
+/**
+ * VIEWMODEL de l'écran Météo.
+ * Sans coordonnées : là où je suis. Avec : à cet endroit (la météo d'un spot).
+ */
+export function useWeatherViewModel(latitude?: number, longitude?: number) {
   const { getLocalWeather } = useDependencies();
   const [uiState, setUiState] = useState<WeatherUiState>({ status: 'loading' });
 
   const load = useCallback(async () => {
     try {
-      const weather = await getLocalWeather.execute();
+      const at = latitude !== undefined && longitude !== undefined ? { latitude, longitude } : undefined;
+      const weather = await getLocalWeather.execute(at);
       setUiState({ status: 'success', weather, isRefreshing: false });
     } catch {
       setUiState({
@@ -29,7 +33,7 @@ export function useWeatherViewModel() {
         message: 'Impossible de récupérer la météo. Vérifiez votre connexion internet.',
       });
     }
-  }, [getLocalWeather]);
+  }, [getLocalWeather, latitude, longitude]);
 
   useEffect(() => {
     load();

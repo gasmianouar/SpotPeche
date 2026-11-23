@@ -16,7 +16,7 @@ class StubAuthRepository implements AuthRepository {
 
 describe('SignInWithProvider', () => {
   it('connecte avec le fournisseur demandé et renvoie l’utilisateur', async () => {
-    const repository = new StubAuthRepository({ id: 'u1', displayName: 'Anouar', provider: 'apple' });
+    const repository = new StubAuthRepository({ id: 'u1', displayName: 'Anouar', photoUrl: null, provider: 'apple' });
 
     const user = await new SignInWithProvider(repository).execute('apple');
 
@@ -25,7 +25,7 @@ describe('SignInWithProvider', () => {
   });
 
   it('refuse un utilisateur sans identifiant', async () => {
-    const repository = new StubAuthRepository({ id: '', displayName: 'X', provider: 'facebook' });
+    const repository = new StubAuthRepository({ id: '', displayName: 'X', photoUrl: null, provider: 'facebook' });
 
     await expect(new SignInWithProvider(repository).execute('facebook')).rejects.toThrow('Utilisateur invalide');
   });
