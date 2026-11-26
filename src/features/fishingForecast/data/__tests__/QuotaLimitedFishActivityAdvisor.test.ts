@@ -22,7 +22,7 @@ const fakeAi = (): FishActivityAdvisor & { calls: number } => {
 describe('QuotaLimitedFishActivityAdvisor', () => {
   it('utilise l’IA dans la limite du jour, puis l’estimation locale avec le message', async () => {
     const ai = fakeAi();
-    const quota = new FreeQuota(new InMemoryUsageRepository(), () => new Date(2026, 10, 23), { 'fish-activity': 2, 'species-recognition': 2 });
+    const quota = new FreeQuota(new InMemoryUsageRepository(), () => new Date(2026, 10, 23), { 'fish-activity': 2 });
     const advisor = new QuotaLimitedFishActivityAdvisor(ai, local, quota);
 
     expect((await advisor.advise(aContext())).source).toBe('ai');

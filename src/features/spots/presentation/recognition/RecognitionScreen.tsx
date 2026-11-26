@@ -42,7 +42,7 @@ export function RecognitionScreen({ onAccept }: { onAccept: (itemId: string) => 
           {uiState.status === 'done' && (
             <View style={styles.badge}>
               <Ionicons name={uiState.isDemo ? 'flask-outline' : 'sparkles'} size={14} color={colors.accent} />
-              <Text style={styles.badgeText}>{uiState.isDemo ? 'Exemple (mode démo)' : 'Analysé par l’agent IA'}</Text>
+              <Text style={styles.badgeText}>{uiState.isDemo ? 'Exemple (mode démo)' : 'Analysé sur le téléphone'}</Text>
             </View>
           )}
         </View>
@@ -57,11 +57,11 @@ export function RecognitionScreen({ onAccept }: { onAccept: (itemId: string) => 
 
         {uiState.status === 'error' && (
           <View style={styles.sheet}>
-            {uiState.limitReached && <Ionicons name="hourglass-outline" size={28} color={colors.accent} style={styles.limitIcon} />}
+            {uiState.unavailable && <Ionicons name="cloud-offline-outline" size={28} color={colors.accent} style={styles.limitIcon} />}
             <Text accessibilityRole="alert" style={styles.sheetText}>
               {uiState.message}
             </Text>
-            {uiState.limitReached ? (
+            {uiState.unavailable ? (
               <PrimaryButton icon="list-outline" label="Choisir dans la liste" onPress={close} />
             ) : (
               <PrimaryButton icon="camera-outline" label="Reprendre une photo" onPress={takePhoto} />
@@ -108,7 +108,7 @@ export function RecognitionScreen({ onAccept }: { onAccept: (itemId: string) => 
             <Text style={styles.note}>
               {uiState.isDemo
                 ? 'Mode démo : la photo n’est pas analysée, ce sont des résultats d’exemple.'
-                : 'Proposition de l’agent IA, à vérifier.'}
+                : 'Proposition calculée sur le téléphone, à vérifier.'}
             </Text>
           </View>
         )}

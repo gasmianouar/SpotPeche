@@ -2,20 +2,21 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useDependencies } from '@/core/di/DependenciesProvider';
-import { FreeLimitReachedError } from '@/features/freeQuota/domain/FreeQuota';
 
-import { PhotoTooLargeError } from '../../domain/recognition/ImageRecognizer';
+import { UNSURE_NOTE } from '../../domain/recognition/scoreSpecies';
 import type { RecognitionResult } from '../../domain/usecases/RecognizeFromPhoto';
 
-/** Photo un peu compressée : l'envoi à l'agent est plus rapide, la reconnaissance reste bonne. */
-const RECOGNITION_PHOTO = { quality: 0.5 };
+/** La photo reste sur le téléphone : une bonne qualité aide le modèle (elle est réduite à 640 px avant l'analyse). */
+const RECOGNITION_PHOTO = { quality: 0.8 };
+
+export const UNAVAILABLE_MESSAGE = 'Reconnaissance indisponible sur ce téléphone. Choisissez l’espèce dans la liste.';
 
 /** États successifs de l'écran (union discriminée, comme pour la météo). */
 export type RecognitionUiState =
   | { status: 'noPhoto' }
   | { status: 'analyzing'; photoUri: string }
   | { status: 'done'; photoUri: string; results: RecognitionResult[]; note: string | null; isDemo: boolean }
-  | { status: 'error'; photoUri: string | null; message: string; limitReached?: boolean };
+  | { status: 'error'; photoUri: string | null; message: string; unavailable?: boolean };
 
 /**
  * VIEWMODEL de la reconnaissance de l'espèce par photo.
@@ -38,23 +39,14 @@ export function useRecognitionViewModel(onAccept: (itemId: string) => void) {
             : {
                 status: 'error',
                 photoUri,
-                // L'agent explique pourquoi (photo floue, élément absent du catalogue…).
-                message: note ?? "L'agent IA n'a rien reconnu. Essayez une photo plus nette.",
+                // « Je ne sais pas » : poisson absent du catalogue, photo floue…
+                message: note ?? UNSURE_NOTE,
               },
         );
-      } catch (error) {
-        if (error instanceof FreeLimitReachedError) {
-          setUiState({ status: 'error', photoUri, message: error.message, limitReached: true });
-          return;
-        }
-        setUiState({
-          status: 'error',
-          photoUri,
-          message:
-            error instanceof PhotoTooLargeError
-              ? 'Photo trop lourde. Reprenez-la ou choisissez-en une autre.'
-              : 'Reconnaissance indisponible pour le moment. Vérifiez votre connexion, ou choisissez dans la liste.',
-        });
+      } catch {
+        // Sur le téléphone, une erreur veut dire que le modèle n'a pas pu tourner (mémoire, fichier abîmé) :
+        // la liste reste toujours disponible.
+        setUiState({ status: 'error', photoUri, message: UNAVAILABLE_MESSAGE, unavailable: true });
       }
     },
     [recognizeFromPhoto],

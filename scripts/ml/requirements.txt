@@ -1,0 +1,12 @@
+# Scripts de la reconnaissance embarquée (export des modèles, centroïdes, contrôle de précision).
+# Environnement sur D: (règle AGENTS.md) :
+#   python -m venv D:\Android\ml-venv
+#   D:\Android\ml-venv\Scripts\pip install --cache-dir D:\Android\pip-cache -r scripts\ml\requirements.txt
+torch>=2.15
+torchvision>=0.29
+torchao>=0.18
+executorch>=1.6
+rfdetr>=1.12
+scikit-learn
+numpy
+pillow

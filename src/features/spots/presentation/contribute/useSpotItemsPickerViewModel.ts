@@ -6,6 +6,7 @@ import { useSessionStore } from '@/features/auth/presentation/state/sessionStore
 
 import type { CatalogKind } from '../../domain/entities/Catalog';
 import type { CatalogPickerVm } from '../picker/CatalogPickerVm';
+import type { HabitatFilter } from '../picker/CatalogPickerVm';
 import { filterCatalog } from '../picker/useCatalogPickerViewModel';
 import { useSpotContributionStore } from './spotContributionStore';
 
@@ -21,6 +22,7 @@ export function useSpotItemsPickerViewModel(spotId: string, kind: CatalogKind): 
 
   const [existingIds, setExistingIds] = useState<readonly string[]>([]);
   const [query, setQuery] = useState('');
+  const [habitat, setHabitat] = useState<HabitatFilter>('sea');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,11 +47,11 @@ export function useSpotItemsPickerViewModel(spotId: string, kind: CatalogKind): 
 
   const items = useMemo(
     () =>
-      filterCatalog(kind, query).map((item) => {
+      filterCatalog(kind, query, habitat).map((item) => {
         const locked = existingIds.includes(item.id);
         return { ...item, locked, selected: locked || newIds.includes(item.id) };
       }),
-    [kind, query, existingIds, newIds],
+    [kind, query, habitat, existingIds, newIds],
   );
 
   const close = useCallback(() => {
@@ -78,6 +80,7 @@ export function useSpotItemsPickerViewModel(spotId: string, kind: CatalogKind): 
     items,
     query,
     setQuery,
+    ...(kind === 'species' ? { habitat, setHabitat } : {}),
     countLabel: newIds.length === 0 ? 'Aucun ajout' : `${newIds.length} ajout${newIds.length > 1 ? 's' : ''}`,
     confirmLabel: 'Ajouter',
     isSaving,

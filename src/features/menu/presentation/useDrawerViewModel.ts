@@ -41,6 +41,12 @@ export function useDrawerViewModel() {
     [close, router],
   );
 
+  /** Petit lien en bas du menu : les mentions des composants open source. */
+  const openCredits = useCallback(() => {
+    close();
+    router.navigate('/a-propos');
+  }, [close, router]);
+
   /** Déconnexion : fermer le menu, prévenir le fournisseur, vider la session. */
   const signOutNow = useCallback(async () => {
     close();
@@ -60,5 +66,5 @@ export function useDrawerViewModel() {
     ]);
   }, [signOutNow]);
 
-  return { isOpen, close, user, isActive, select, confirmSignOut };
+  return { isOpen, close, user, isActive, select, confirmSignOut, openCredits };
 }

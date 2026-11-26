@@ -1,4 +1,7 @@
-import type { CatalogItem } from '../../domain/entities/Catalog';
+import type { CatalogItem, Habitat } from '../../domain/entities/Catalog';
+
+/** Filtre de la grille des espèces : un milieu, ou tout. */
+export type HabitatFilter = Habitat | 'all';
 
 /** Un élément de la grille de choix. */
 export interface PickerItem extends CatalogItem {
@@ -17,6 +20,9 @@ export interface CatalogPickerVm {
   readonly items: readonly PickerItem[];
   readonly query: string;
   setQuery(query: string): void;
+  /** Filtre par milieu : seulement pour les espèces (absent pour les appâts). Mer par défaut. */
+  readonly habitat?: HabitatFilter;
+  readonly setHabitat?: (habitat: HabitatFilter) => void;
   /** Ex. « 2 sélectionné(s) » ou « 1 ajout ». */
   readonly countLabel: string;
   readonly confirmLabel: string;

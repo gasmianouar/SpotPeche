@@ -18,7 +18,7 @@ const ANIMATION_MS = 220;
  * native en plus, donc pas besoin de recompiler l'app de développement.
  */
 export function AppDrawer() {
-  const { isOpen, close, user, isActive, select, confirmSignOut } = useDrawerViewModel();
+  const { isOpen, close, user, isActive, select, confirmSignOut, openCredits } = useDrawerViewModel();
   const insets = useSafeAreaInsets();
 
   // Valeur animée : 0 = menu caché à gauche, 1 = menu ouvert.
@@ -69,10 +69,20 @@ export function AppDrawer() {
           accessibilityRole="button"
           accessibilityLabel="Se déconnecter"
           onPress={confirmSignOut}
-          style={({ pressed }) => [styles.row, styles.signOut, { marginBottom: insets.bottom + spacing.md }, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.row, styles.signOut, pressed && styles.pressed]}
         >
           <Ionicons name="log-out-outline" size={22} color="#B42318" />
           <Text style={[styles.rowLabel, styles.signOutLabel]}>Se déconnecter</Text>
+        </Pressable>
+
+        {/* Mention des licences, discrète : obligation des licences MIT et Apache 2.0 des modèles embarqués. */}
+        <Pressable
+          accessibilityRole="link"
+          onPress={openCredits}
+          hitSlop={8}
+          style={({ pressed }) => [styles.credits, { marginBottom: insets.bottom + spacing.md }, pressed && styles.pressed]}
+        >
+          <Text style={styles.creditsLabel}>Composants open source</Text>
         </Pressable>
       </Animated.View>
     </Modal>
@@ -147,4 +157,6 @@ const styles = StyleSheet.create({
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: spacing.sm, marginHorizontal: spacing.md },
   signOut: { marginHorizontal: spacing.md, marginTop: spacing.sm },
   signOutLabel: { fontFamily: fonts.bodySemiBold, color: '#B42318' },
+  credits: { alignSelf: 'flex-start', marginHorizontal: spacing.xl, marginTop: spacing.xs },
+  creditsLabel: { fontFamily: fonts.body, fontSize: 12, color: colors.muted },
 });

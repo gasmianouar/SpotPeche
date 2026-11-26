@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 
 import { catalogFor, type CatalogKind } from '../../domain/entities/Catalog';
+import type { HabitatFilter } from './CatalogPickerVm';
 import { selectIds, useSpotDraftStore } from '../create/spotDraftStore';
 import type { CatalogPickerVm } from './CatalogPickerVm';
 
@@ -12,12 +13,18 @@ export const normalize = (text: string) =>
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase();
 
-/** Filtre du catalogue par la recherche (nom français ou latin). */
-export function filterCatalog(kind: CatalogKind, query: string) {
+/**
+ * Filtre du catalogue : par milieu (espèces seulement) et par la recherche (nom français, latin,
+ * ou nom latin d'un membre d'un groupe). Une recherche tapée cherche dans TOUS les milieux :
+ * taper « brochet » avec le filtre « Mer » doit quand même le trouver.
+ */
+export function filterCatalog(kind: CatalogKind, query: string, habitat: HabitatFilter = 'all') {
   const q = normalize(query.trim());
-  return catalogFor(kind).filter(
-    (item) => !q || normalize(item.name).includes(q) || normalize(item.latinName ?? '').includes(q),
-  );
+  const names = (item: ReturnType<typeof catalogFor>[number]) => [item.name, item.latinName ?? '', ...(item.members ?? [])];
+  return catalogFor(kind).filter((item) => {
+    if (q) return names(item).some((n) => normalize(n).includes(q));
+    return kind === 'bait' || habitat === 'all' || item.habitat === habitat;
+  });
 }
 
 /**
@@ -30,16 +37,19 @@ export function useCatalogPickerViewModel(kind: CatalogKind): CatalogPickerVm {
   const selectedIds = useSpotDraftStore(selectIds(kind));
   const toggleItem = useSpotDraftStore((s) => s.toggleItem);
   const [query, setQuery] = useState('');
+  const [habitat, setHabitat] = useState<HabitatFilter>('sea');
 
   const items = useMemo(
-    () => filterCatalog(kind, query).map((item) => ({ ...item, selected: selectedIds.includes(item.id), locked: false })),
-    [kind, query, selectedIds],
+    () => filterCatalog(kind, query, habitat).map((item) => ({ ...item, selected: selectedIds.includes(item.id), locked: false })),
+    [kind, query, habitat, selectedIds],
   );
 
   return {
     items,
     query,
     setQuery,
+    // Filtre Mer · Eau douce · Tout : espèces seulement.
+    ...(kind === 'species' ? { habitat, setHabitat } : {}),
     countLabel: `${selectedIds.length} sélectionné(s)`,
     confirmLabel: 'OK',
     isSaving: false,

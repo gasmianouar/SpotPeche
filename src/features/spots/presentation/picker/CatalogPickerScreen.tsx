@@ -7,7 +7,13 @@ import { IconButton } from '@/shared/ui/IconButton';
 
 import type { CatalogKind } from '../../domain/entities/Catalog';
 import { catalogImage } from '../catalog/catalogImages';
-import type { CatalogPickerVm } from './CatalogPickerVm';
+import type { CatalogPickerVm, HabitatFilter } from './CatalogPickerVm';
+
+const HABITATS: { value: HabitatFilter; label: string }[] = [
+  { value: 'sea', label: 'Mer' },
+  { value: 'fresh', label: 'Eau douce' },
+  { value: 'all', label: 'Tout' },
+];
 
 /** Textes propres à chaque catalogue : le composant reste le même pour les deux. */
 const COPY: Record<CatalogKind, { title: string; intro: string; search: string }> = {
@@ -57,6 +63,24 @@ export function CatalogPickerScreen({ kind, vm }: { kind: CatalogKind; vm: Catal
                 style={styles.searchInput}
               />
             </View>
+            {vm.setHabitat && !vm.query.trim() && (
+              <View style={styles.habitats} accessibilityRole="radiogroup">
+                {HABITATS.map(({ value, label }) => {
+                  const active = vm.habitat === value;
+                  return (
+                    <Pressable
+                      key={value}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: active }}
+                      onPress={() => vm.setHabitat?.(value)}
+                      style={({ pressed }) => [styles.habitat, active && styles.habitatActive, pressed && styles.pressed]}
+                    >
+                      <Text style={[styles.habitatLabel, active && styles.habitatLabelActive]}>{label}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
             {vm.recognize && (
               <>
                 <Pressable
@@ -68,7 +92,7 @@ export function CatalogPickerScreen({ kind, vm }: { kind: CatalogKind; vm: Catal
                   <Text style={styles.recognizeLabel}>Reconnaître l’espèce</Text>
                   <Ionicons name="sparkles" size={16} color={colors.accent} />
                 </Pressable>
-                <Text style={styles.hint}>Pas sûr de l’espèce ? Photographiez votre prise : l’agent IA l’identifie et la sélectionne.</Text>
+                <Text style={styles.hint}>Pas sûr de l’espèce ? Photographiez votre prise : le téléphone propose l’espèce, même sans réseau.</Text>
               </>
             )}
           </View>
@@ -149,6 +173,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   searchInput: { flex: 1, fontFamily: fonts.body, fontSize: 15, color: colors.ink },
+  habitats: { flexDirection: 'row', gap: spacing.sm },
+  habitat: {
+    minHeight: 40,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  habitatActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  habitatLabel: { fontFamily: fonts.bodySemiBold, fontSize: 14, color: colors.ink },
+  habitatLabelActive: { color: colors.surface },
   recognize: {
     minHeight: 48,
     borderRadius: radius.md - 2,

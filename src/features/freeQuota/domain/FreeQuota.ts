@@ -4,20 +4,21 @@
  * L'application est gratuite. Les analyses par l'agent IA coûtent de l'argent (API Claude) :
  * elles sont donc limitées chaque jour, par téléphone. Au-delà, un message annonce
  * que l'usage illimité fera partie d'une future version payante.
+ * La reconnaissance des espèces tourne sur le téléphone (Sprint 7) : gratuite, elle n'est plus limitée.
  */
-export type AiFeature = 'fish-activity' | 'species-recognition';
+export type AiFeature = 'fish-activity';
 
 /** Nombre d'utilisations gratuites par jour et par téléphone. */
 export const FREE_DAILY_LIMITS: Record<AiFeature, number> = {
   'fish-activity': 5,
-  'species-recognition': 5,
 };
 
 /** Message montré quand la limite est atteinte. */
 export function freeLimitMessage(feature: AiFeature, limit = FREE_DAILY_LIMITS[feature]): string {
-  return feature === 'fish-activity'
-    ? `Limite gratuite atteinte : ${limit} analyses IA par jour. L’analyse IA illimitée fera partie de la version payante (bientôt disponible). En attendant, voici l’estimation locale, gratuite.`
-    : `Limite gratuite atteinte : ${limit} reconnaissances par jour. La reconnaissance illimitée fera partie de la version payante (bientôt disponible). Choisissez l’espèce dans la liste, ou revenez demain.`;
+  switch (feature) {
+    case 'fish-activity':
+      return `Limite gratuite atteinte : ${limit} analyses IA par jour. L’analyse IA illimitée fera partie de la version payante (bientôt disponible). En attendant, voici l’estimation locale, gratuite.`;
+  }
 }
 
 export class FreeLimitReachedError extends Error {

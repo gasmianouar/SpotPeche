@@ -11,7 +11,12 @@
       "bundleIdentifier": "com.gasmianouar.spotpeche",
       "usesAppleSignIn": true,
       "infoPlist": {
-        "LSApplicationQueriesSchemes": ["comgooglemaps", "waze", "whatsapp", "fb-messenger"]
+        "LSApplicationQueriesSchemes": [
+          "comgooglemaps",
+          "waze",
+          "whatsapp",
+          "fb-messenger"
+        ]
       }
     },
     "android": {
@@ -45,7 +50,16 @@
           "photosPermission": "Spot accède à vos photos pour illustrer vos spots."
         }
       ],
-      "./plugins/withLowMemoryGradle"
+      "./plugins/withLowMemoryGradle",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26,
+            "extraProguardRules": "-dontwarn com.tencent.mmkv.**"
+          }
+        }
+      ]
     ],
     "scheme": "spotpeche",
     "experiments": {

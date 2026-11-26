@@ -8,7 +8,7 @@ import {
   type PreciseLocationService,
 } from '@/core/location/LocationService';
 import { ExpoPhotoService, type PhotoService } from '@/core/media/PhotoService';
-import { FetchPhotoReader } from '@/core/media/PhotoReader';
+import { ExpoPhotoPixelsReader } from '@/core/media/PhotoPixelsReader';
 import { FakeAuthRepository } from '@/features/auth/data/FakeAuthRepository';
 import { CachedFishActivityAdvisor } from '@/features/fishingForecast/data/CachedFishActivityAdvisor';
 import { LocalFishActivityAdvisor } from '@/features/fishingForecast/data/LocalFishActivityAdvisor';
@@ -29,9 +29,13 @@ import { SPOT_MIGRATIONS } from '@/features/spots/data/local/spotMigrations';
 import { SqliteActivityVoteRepository } from '@/features/spots/data/local/SqliteActivityVoteRepository';
 import { SqliteMessageRepository, SqliteReactionRepository } from '@/features/spots/data/local/SqliteMessageRepository';
 import { SqliteSpotRepository } from '@/features/spots/data/local/SqliteSpotRepository';
-import { AgentImageRecognizer } from '@/features/spots/data/recognition/AgentImageRecognizer';
-import { DemoImageRecognizer } from '@/features/spots/data/recognition/DemoImageRecognizer';
-import { QuotaLimitedImageRecognizer } from '@/features/spots/data/recognition/QuotaLimitedImageRecognizer';
+import { ExecutorchFishDetector } from '@/features/spots/data/recognition/executorch/ExecutorchFishDetector';
+import { ExecutorchSpeciesEmbedder } from '@/features/spots/data/recognition/executorch/ExecutorchSpeciesEmbedder';
+import { MODEL_ASSETS, SPECIES_HEAD } from '@/features/spots/data/recognition/executorch/modelAssets';
+import { ExecutorchPteRunner } from '@/features/spots/data/recognition/executorch/PteRunner';
+import { loadSpeciesHead } from '@/features/spots/data/recognition/executorch/speciesHead';
+import { OnDeviceImageRecognizer } from '@/features/spots/data/recognition/OnDeviceImageRecognizer';
+import { SPECIES_CATALOG } from '@/features/spots/domain/entities/Catalog';
 import { AddSpotItems } from '@/features/spots/domain/usecases/AddSpotItems';
 import { CreateSpot } from '@/features/spots/domain/usecases/CreateSpot';
 import { GetMapSpots } from '@/features/spots/domain/usecases/GetMapSpots';
@@ -47,8 +51,7 @@ import { GetLocalWeather } from '@/features/weather/domain/usecases/GetLocalWeat
  * COMPOSITION ROOT : le seul endroit qui sait quelles implémentations concrètes
  * sont utilisées. Les écrans ne voient que les cas d'usage et les interfaces.
  *
- * Pour brancher la vraie connexion Facebook/Apple ou le vrai agent IA,
- * on remplacera FakeAuthRepository / DemoImageRecognizer ici, et nulle part ailleurs.
+ * Pour brancher la vraie connexion Facebook/Apple, on remplacera FakeAuthRepository ici, et nulle part ailleurs.
  */
 export interface Dependencies {
   signInWithProvider: SignInWithProvider;
@@ -83,7 +86,7 @@ export function createDependencies(): Dependencies {
   const idGenerator = new RandomIdGenerator();
   const externalApps = new NativeExternalApps();
 
-  // L'app est gratuite : les fonctions d'IA (payantes pour nous) ont une limite par jour et par téléphone.
+  // L'app est gratuite : l'analyse IA de l'activité des poissons (payante pour nous) a une limite par jour et par téléphone.
   const freeQuota = new FreeQuota(new SqliteUsageRepository(database));
 
   // Activité des poissons : l'agent IA (serveur Claude) si son adresse est configurée,
@@ -114,12 +117,17 @@ export function createDependencies(): Dependencies {
     postMessage: new PostMessage(messageRepository, idGenerator),
     reactToMessage: new ReactToMessage(reactionRepository),
     voteActivity: new VoteActivity(voteRepository),
-    // Reconnaissance de l'espèce : le vrai agent IA (dans la limite gratuite) si son serveur est configuré,
-    // sinon la démo, affichée comme telle.
+    // Reconnaissance de l'espèce SUR LE TÉLÉPHONE (Sprint 7) : gratuite, illimitée, sans réseau.
+    // Détecteur et classifieur Fishial (ExecuTorch), puis couche de décision apprise sur nos photos de référence.
+    // Elle est vérifiée au premier usage : un fichier abîmé ne fait pas planter l'app.
+    // (AgentImageRecognizer et DemoImageRecognizer restent dans le projet, non branchés.)
     recognizeFromPhoto: new RecognizeFromPhoto(
-      env.spotAiUrl
-        ? new QuotaLimitedImageRecognizer(new AgentImageRecognizer(env.spotAiUrl, new FetchPhotoReader()), freeQuota)
-        : new DemoImageRecognizer(),
+      new OnDeviceImageRecognizer(
+        new ExpoPhotoPixelsReader(),
+        new ExecutorchFishDetector(new ExecutorchPteRunner(MODEL_ASSETS.detector)),
+        new ExecutorchSpeciesEmbedder(new ExecutorchPteRunner(MODEL_ASSETS.embedder)),
+        () => loadSpeciesHead(SPECIES_HEAD, SPECIES_CATALOG),
+      ),
     ),
     getLocalWeather: new GetLocalWeather(expoLocation, expoLocation, weatherRepository),
     getSpotFishingConditions: new GetSpotFishingConditions(weatherRepository, fishActivityAdvisor, localAdvisor, ratingRepository),
