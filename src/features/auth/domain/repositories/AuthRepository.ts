@@ -10,6 +10,8 @@ import type { AuthProvider, User } from '../entities/User';
 export interface AuthRepository {
   signIn(provider: AuthProvider): Promise<User>;
   signOut(): Promise<void>;
+  /** La session déjà ouverte sur ce téléphone, s'il y en a une (facultatif : la version simulée n'en garde pas). */
+  currentUser?(): Promise<User | null>;
 }
 
 /** Erreur métier : l'utilisateur a fermé la fenêtre de connexion. */

@@ -5,12 +5,13 @@ import { Stack } from 'expo-router';
 
 import { DependenciesProvider } from '@/core/di/DependenciesProvider';
 import { RestoreLanguage } from '@/core/i18n/useLanguageChooser';
+import { SessionGate } from '@/features/auth/presentation/state/SessionGate';
 import { useSessionStore } from '@/features/auth/presentation/state/sessionStore';
 
 /**
  * LAYOUT RACINE (Expo Router) : il enveloppe toute l'app.
  * 1. charge les polices de la maquette ;
- * 2. fournit les dépendances (DependenciesProvider) et reprend la langue choisie ;
+ * 2. fournit les dépendances (DependenciesProvider), reprend la langue choisie et la session ouverte ;
  * 3. protège les routes : connecté → onglets, sinon → connexion.
  */
 export default function RootLayout() {
@@ -30,21 +31,23 @@ export default function RootLayout() {
   return (
     <DependenciesProvider>
       <RestoreLanguage />
-      <Stack screenOptions={{ headerShown: false }}>
-        {/* Stack.Protected : une route n'est accessible que si `guard` est vrai.
-            Sinon Expo Router redirige automatiquement vers une route autorisée. */}
-        <Stack.Protected guard={isSignedIn}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="mes-prises" />
-          <Stack.Screen name="a-propos" />
-          <Stack.Screen name="nouveau-spot" />
-          <Stack.Screen name="spot/[id]" />
-          <Stack.Screen name="compte" />
-        </Stack.Protected>
-        <Stack.Protected guard={!isSignedIn}>
-          <Stack.Screen name="login" />
-        </Stack.Protected>
-      </Stack>
+      <SessionGate>
+        <Stack screenOptions={{ headerShown: false }}>
+          {/* Stack.Protected : une route n'est accessible que si `guard` est vrai.
+              Sinon Expo Router redirige automatiquement vers une route autorisée. */}
+          <Stack.Protected guard={isSignedIn}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="mes-prises" />
+            <Stack.Screen name="a-propos" />
+            <Stack.Screen name="nouveau-spot" />
+            <Stack.Screen name="spot/[id]" />
+            <Stack.Screen name="compte" />
+          </Stack.Protected>
+          <Stack.Protected guard={!isSignedIn}>
+            <Stack.Screen name="login" />
+          </Stack.Protected>
+        </Stack>
+      </SessionGate>
     </DependenciesProvider>
   );
 }

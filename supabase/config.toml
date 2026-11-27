@@ -1,0 +1,42 @@
+# Configuration du projet Supabase local (CLI : `npx supabase start`).
+# Le projet en ligne se règle dans le tableau de bord Supabase (voir docs/BACKEND.md).
+project_id = "spotpeche"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17
+
+[auth]
+enabled = true
+site_url = "spotpeche://auth/callback"
+additional_redirect_urls = ["spotpeche://**", "exp://**"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.external.google]
+enabled = false
+client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
+
+[auth.external.apple]
+enabled = false
+client_id = "env(SUPABASE_AUTH_APPLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_APPLE_SECRET)"
+
+[auth.external.facebook]
+enabled = false
+client_id = "env(SUPABASE_AUTH_FACEBOOK_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_FACEBOOK_SECRET)"
+
+[storage]
+enabled = true
+file_size_limit = "5MiB"
+
+[functions.delete-account]
+verify_jwt = true
