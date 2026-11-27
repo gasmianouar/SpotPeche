@@ -17,6 +17,10 @@ export const colors = {
   community: '#D63A2C', // marqueurs rouges : spots des autres
   facebook: '#1877F2',
   apple: '#000000',
+  googleText: '#1F1F1F', // bouton Google clair
+  googleBorder: '#DADCE0',
+  danger: '#B42318', // actions destructrices (supprimer, bloquer)
+  dangerSoft: '#FDECEA',
   userLocation: '#1F6FEB',
 } as const;
 

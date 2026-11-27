@@ -11,6 +11,12 @@ import {
 } from '@/core/location/LocationService';
 import { ExpoPhotoService, type PhotoService } from '@/core/media/PhotoService';
 import { ExpoPhotoPixelsReader } from '@/core/media/PhotoPixelsReader';
+import { FakeAccountRepository } from '@/features/account/data/FakeAccountRepository';
+import { KvAccountPreferencesRepository } from '@/features/account/data/KvAccountPreferencesRepository';
+import { SqliteAccountDataEraser } from '@/features/account/data/local/SqliteAccountDataEraser';
+import { GetAccountPreferences, UpdateAccountPreferences } from '@/features/account/domain/usecases/AccountPreferencesUseCases';
+import { DeleteAccount } from '@/features/account/domain/usecases/DeleteAccount';
+import { GetLinkedProviders, LinkProvider } from '@/features/account/domain/usecases/LinkedProviders';
 import { FakeAuthRepository } from '@/features/auth/data/FakeAuthRepository';
 import { CachedFishActivityAdvisor } from '@/features/fishingForecast/data/CachedFishActivityAdvisor';
 import { LocalFishActivityAdvisor } from '@/features/fishingForecast/data/LocalFishActivityAdvisor';
@@ -29,6 +35,10 @@ import { GetSpotFishingConditions } from '@/features/fishingForecast/domain/usec
 import { RateForecastReliability } from '@/features/fishingForecast/domain/usecases/RateForecastReliability';
 import { SignInWithProvider } from '@/features/auth/domain/usecases/SignInWithProvider';
 import { SignOut } from '@/features/auth/domain/usecases/SignOut';
+import { MODERATION_MIGRATIONS } from '@/features/moderation/data/local/moderationMigrations';
+import { SqliteBlockRepository, SqliteReportRepository } from '@/features/moderation/data/local/SqliteModerationRepositories';
+import { BlockUser, GetBlockedUsers, UnblockUser } from '@/features/moderation/domain/usecases/BlockUser';
+import { ReportContent } from '@/features/moderation/domain/usecases/ReportContent';
 import { SPOT_MIGRATIONS } from '@/features/spots/data/local/spotMigrations';
 import { SqliteActivityVoteRepository } from '@/features/spots/data/local/SqliteActivityVoteRepository';
 import { SqliteMessageRepository, SqliteReactionRepository } from '@/features/spots/data/local/SqliteMessageRepository';
@@ -79,19 +89,40 @@ export interface Dependencies {
   photoService: PhotoService;
   directionsService: DirectionsService;
   shareService: ShareService;
+  // Signalement et blocage (Sprint 10)
+  reportContent: ReportContent;
+  blockUser: BlockUser;
+  unblockUser: UnblockUser;
+  getBlockedUsers: GetBlockedUsers;
+  // Compte et confidentialité (Sprint 10)
+  getAccountPreferences: GetAccountPreferences;
+  updateAccountPreferences: UpdateAccountPreferences;
+  getLinkedProviders: GetLinkedProviders;
+  linkProvider: LinkProvider;
+  deleteAccount: DeleteAccount;
 }
 
 export function createDependencies(): Dependencies {
   const authRepository = new FakeAuthRepository();
   // Base SQLite locale « spot.db » : les spots restent disponibles hors connexion.
   // Chaque feature apporte ses migrations ; on les réunit ici.
-  const database = createDatabaseProvider('spot.db', [...SPOT_MIGRATIONS, ...FORECAST_MIGRATIONS, ...USAGE_MIGRATIONS]);
+  const database = createDatabaseProvider('spot.db', [
+    ...SPOT_MIGRATIONS,
+    ...FORECAST_MIGRATIONS,
+    ...USAGE_MIGRATIONS,
+    ...MODERATION_MIGRATIONS,
+  ]);
   const spotRepository = new SqliteSpotRepository(database);
   const messageRepository = new SqliteMessageRepository(database);
   const reactionRepository = new SqliteReactionRepository(database);
   const voteRepository = new SqliteActivityVoteRepository(database);
   const idGenerator = new RandomIdGenerator();
   const externalApps = new NativeExternalApps();
+  // Blocages : la carte et les discussions masquent les personnes bloquées.
+  const blockRepository = new SqliteBlockRepository(database);
+  // Compte côté serveur SIMULÉ (comme la connexion) : à remplacer par le vrai backend ici.
+  const accountRepository = new FakeAccountRepository();
+  const accountPreferences = new KvAccountPreferencesRepository();
 
   // L'app est gratuite : l'analyse IA de l'activité des poissons (payante pour nous) a une limite par jour et par téléphone.
   const freeQuota = new FreeQuota(new SqliteUsageRepository(database));
@@ -122,9 +153,9 @@ export function createDependencies(): Dependencies {
     getMyCatches: new GetMyCatches(spotRepository, messageRepository),
     signInWithProvider: new SignInWithProvider(authRepository),
     signOut: new SignOut(authRepository),
-    getMapSpots: new GetMapSpots(spotRepository),
+    getMapSpots: new GetMapSpots(spotRepository, blockRepository),
     createSpot: new CreateSpot(spotRepository, voteRepository, idGenerator),
-    getSpotDetail: new GetSpotDetail(spotRepository, messageRepository, reactionRepository, voteRepository),
+    getSpotDetail: new GetSpotDetail(spotRepository, messageRepository, reactionRepository, voteRepository, blockRepository),
     addSpotItems: new AddSpotItems(spotRepository),
     postMessage: new PostMessage(messageRepository, idGenerator),
     reactToMessage: new ReactToMessage(reactionRepository),
@@ -149,5 +180,15 @@ export function createDependencies(): Dependencies {
     photoService: new ExpoPhotoService(),
     directionsService: externalApps,
     shareService: externalApps,
+    // Signalements gardés sur le téléphone en attendant le serveur de modération (colonne sent_at prévue).
+    reportContent: new ReportContent(new SqliteReportRepository(database), idGenerator),
+    blockUser: new BlockUser(blockRepository),
+    unblockUser: new UnblockUser(blockRepository),
+    getBlockedUsers: new GetBlockedUsers(blockRepository),
+    getAccountPreferences: new GetAccountPreferences(accountPreferences),
+    updateAccountPreferences: new UpdateAccountPreferences(accountPreferences),
+    getLinkedProviders: new GetLinkedProviders(accountRepository),
+    linkProvider: new LinkProvider(accountRepository),
+    deleteAccount: new DeleteAccount(accountRepository, new SqliteAccountDataEraser(database), accountPreferences),
   };
 }

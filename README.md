@@ -12,6 +12,7 @@ Application mobile iOS et Android (React Native + Expo, TypeScript) pour repére
 - Sprint 7 (reconnaissance des espèces sur le téléphone) : [docs/SPRINT-7.md](docs/SPRINT-7.md)
 - Sprint 8 (menu : Appâts → Google Maps, Mes prises) : [docs/SPRINT-8.md](docs/SPRINT-8.md)
 - Sprint 9 (l'app en arabe, français et anglais) : [docs/SPRINT-9.md](docs/SPRINT-9.md)
+- Sprint 10 (compte, confidentialité, signalement et blocage) : [docs/SPRINT-10.md](docs/SPRINT-10.md)
 
 ```bash
 npm install

@@ -10,6 +10,7 @@ const draft = (overrides: Partial<SpotDraft> = {}): SpotDraft => ({
   speciesIds: [],
   baitIds: [],
   activity: null,
+  visibility: 'private',
   description: '',
   photoUris: [],
   ...overrides,
@@ -39,6 +40,7 @@ describe('CreateSpot', () => {
       speciesIds: ['brochet'],
       baitIds: ['shad'],
       activity: 'good',
+      visibility: 'private',
       description: 'Bord du lac',
       photoUris: [],
       createdAt: NOW.getTime(),
@@ -52,6 +54,22 @@ describe('CreateSpot', () => {
     await useCase.execute(draft({ activity: 'medium' }), ME);
 
     expect(await votes.listForSpot('new-id')).toEqual([{ spotId: 'new-id', userId: 'me', activity: 'medium' }]);
+  });
+
+  it('enregistre la visibilité choisie', async () => {
+    const { useCase } = setup();
+
+    const spot = await useCase.execute(draft({ visibility: 'public' }), ME);
+
+    expect(spot.visibility).toBe('public');
+  });
+
+  it('rend le spot privé si la visibilité reçue est inattendue', async () => {
+    const { useCase } = setup();
+
+    const spot = await useCase.execute(draft({ visibility: 'tout-le-monde' as never }), ME);
+
+    expect(spot.visibility).toBe('private');
   });
 
   it('refuse un spot sans position', async () => {

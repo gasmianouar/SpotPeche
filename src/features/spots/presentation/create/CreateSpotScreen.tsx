@@ -13,6 +13,7 @@ import { ActivitySelector } from './components/ActivitySelector';
 import { CatalogSelection } from './components/CatalogSelection';
 import { CommentComposer } from './components/CommentComposer';
 import { LocationPicker } from './components/LocationPicker';
+import { VisibilitySelector } from './components/VisibilitySelector';
 
 import { useCreateSpotViewModel } from './useCreateSpotViewModel';
 
@@ -67,6 +68,8 @@ export function CreateSpotScreen() {
           />
 
           <ActivitySelector value={draft.activity} onChange={vm.setActivity} />
+
+          <VisibilitySelector value={draft.visibility} onChange={vm.setVisibility} />
 
           <CommentComposer
             value={draft.description}

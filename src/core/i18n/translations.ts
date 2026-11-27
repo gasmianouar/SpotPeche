@@ -1,9 +1,12 @@
+import { accountTexts } from '@/features/account/presentation/texts';
 import { authTexts } from '@/features/auth/presentation/texts';
 import { catchesTexts } from '@/features/catches/presentation/texts';
 import { forecastTexts } from '@/features/fishingForecast/presentation/texts';
 import { menuTexts } from '@/features/menu/presentation/texts';
+import { moderationTexts } from '@/features/moderation/presentation/texts';
 import { catalogTexts } from '@/features/spots/presentation/catalog/catalogTexts';
 import { spotsTexts } from '@/features/spots/presentation/texts';
+import { visibilityTexts } from '@/features/spots/presentation/visibilityTexts';
 import { weatherTexts } from '@/features/weather/presentation/texts';
 
 import { commonTexts } from './commonTexts';
@@ -20,6 +23,9 @@ const SOURCES = {
   spots: spotsTexts,
   catalog: catalogTexts,
   catches: catchesTexts,
+  visibility: visibilityTexts,
+  moderation: moderationTexts,
+  account: accountTexts,
 };
 
 type KeysOf<T> = T extends Texts<infer K> ? K : never;

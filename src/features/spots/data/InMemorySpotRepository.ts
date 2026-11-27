@@ -20,6 +20,7 @@ const sample = (
   speciesIds: details.speciesIds,
   baitIds: details.baitIds,
   activity: details.activity,
+  visibility: 'public',
   description: details.description,
   photoUris: [],
   createdAt: Date.UTC(2026, 10, details.day, 7, 40),

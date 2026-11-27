@@ -161,4 +161,14 @@ export const SPOT_MIGRATIONS: Migration[] = [
       }
     },
   },
+  {
+    // Les versions 5 et 6 appartiennent à la prévision de pêche et au quota gratuit (un seul compteur pour la base).
+    version: 7,
+    description: 'Visibilité des spots : privé ou public',
+    async up(db) {
+      // Les spots existants restaient visibles par tous : ils deviennent « public » pour ne rien casser.
+      // Les nouveaux spots sont privés par défaut (choix fait à la création).
+      await db.execAsync(`ALTER TABLE spots ADD COLUMN visibility TEXT NOT NULL DEFAULT 'public';`);
+    },
+  },
 ];

@@ -1,5 +1,7 @@
+import type { BlockRepository } from '@/features/moderation/domain/repositories/BlockRepository';
+
 import { findCatalogItems, type CatalogItem } from '../entities/Catalog';
-import { FISH_ACTIVITIES, type FishActivity, type Spot } from '../entities/Spot';
+import { FISH_ACTIVITIES, isVisibleTo, type FishActivity, type Spot } from '../entities/Spot';
 import {
   creatorPostId,
   REACTION_EMOJIS,
@@ -65,13 +67,19 @@ export class GetSpotDetail {
     private readonly messageRepository: MessageRepository,
     private readonly reactionRepository: ReactionRepository,
     private readonly voteRepository: ActivityVoteRepository,
+    private readonly blockRepository?: Pick<BlockRepository, 'listBlockedIds'>,
   ) {}
 
   async execute(spotId: string, currentUserId: string): Promise<SpotDetail> {
     const spot = await this.spotRepository.getById(spotId);
-    if (!spot) throw new SpotNotFoundError(spotId);
+    // Un spot privé d'un autre pêcheur se comporte comme un spot inexistant (on ne révèle pas qu'il existe).
+    if (!spot || !isVisibleTo(spot, currentUserId)) throw new SpotNotFoundError(spotId);
 
-    const stored = await this.messageRepository.listBySpot(spotId);
+    const blockedIds = new Set(
+      currentUserId && this.blockRepository ? await this.blockRepository.listBlockedIds(currentUserId) : [],
+    );
+    // Les messages des personnes bloquées sont masqués.
+    const stored = (await this.messageRepository.listBySpot(spotId)).filter((m) => !blockedIds.has(m.author.id));
     const post = creatorPost(spot);
     const messages = post ? [post, ...stored] : stored;
     const [reactions, votes] = await Promise.all([
