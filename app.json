@@ -59,7 +59,8 @@
             "extraProguardRules": "-dontwarn com.tencent.mmkv.**"
           }
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "scheme": "spotpeche",
     "experiments": {

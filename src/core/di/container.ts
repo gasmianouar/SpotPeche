@@ -11,13 +11,24 @@ import {
 } from '@/core/location/LocationService';
 import { ExpoPhotoService, type PhotoService } from '@/core/media/PhotoService';
 import { ExpoPhotoPixelsReader } from '@/core/media/PhotoPixelsReader';
+import { getSupabase, isSupabaseConfigured } from '@/core/supabase/supabaseClient';
 import { FakeAccountRepository } from '@/features/account/data/FakeAccountRepository';
 import { KvAccountPreferencesRepository } from '@/features/account/data/KvAccountPreferencesRepository';
 import { SqliteAccountDataEraser } from '@/features/account/data/local/SqliteAccountDataEraser';
+import {
+  CompositeAccountDataEraser,
+  SupabaseAccountDataEraser,
+  SupabaseAccountRepository,
+} from '@/features/account/data/remote/SupabaseAccountRepositories';
+import type { AccountDataEraser } from '@/features/account/domain/ports/AccountDataEraser';
+import type { AccountRepository } from '@/features/account/domain/repositories/AccountRepository';
 import { GetAccountPreferences, UpdateAccountPreferences } from '@/features/account/domain/usecases/AccountPreferencesUseCases';
 import { DeleteAccount } from '@/features/account/domain/usecases/DeleteAccount';
 import { GetLinkedProviders, LinkProvider } from '@/features/account/domain/usecases/LinkedProviders';
 import { FakeAuthRepository } from '@/features/auth/data/FakeAuthRepository';
+import { SupabaseAuthRepository } from '@/features/auth/data/remote/SupabaseAuthRepository';
+import type { AuthRepository } from '@/features/auth/domain/repositories/AuthRepository';
+import { RestoreSession } from '@/features/auth/domain/usecases/RestoreSession';
 import { CachedFishActivityAdvisor } from '@/features/fishingForecast/data/CachedFishActivityAdvisor';
 import { LocalFishActivityAdvisor } from '@/features/fishingForecast/data/LocalFishActivityAdvisor';
 import { FindNearbyBaitShops } from '@/features/baitShops/domain/usecases/FindNearbyBaitShops';
@@ -37,12 +48,25 @@ import { SignInWithProvider } from '@/features/auth/domain/usecases/SignInWithPr
 import { SignOut } from '@/features/auth/domain/usecases/SignOut';
 import { MODERATION_MIGRATIONS } from '@/features/moderation/data/local/moderationMigrations';
 import { SqliteBlockRepository, SqliteReportRepository } from '@/features/moderation/data/local/SqliteModerationRepositories';
+import { SupabaseBlockRepository, SupabaseReportRepository } from '@/features/moderation/data/remote/SupabaseModerationRepositories';
+import type { BlockRepository } from '@/features/moderation/domain/repositories/BlockRepository';
+import type { ReportRepository } from '@/features/moderation/domain/repositories/ReportRepository';
 import { BlockUser, GetBlockedUsers, UnblockUser } from '@/features/moderation/domain/usecases/BlockUser';
 import { ReportContent } from '@/features/moderation/domain/usecases/ReportContent';
 import { SPOT_MIGRATIONS } from '@/features/spots/data/local/spotMigrations';
 import { SqliteActivityVoteRepository } from '@/features/spots/data/local/SqliteActivityVoteRepository';
 import { SqliteMessageRepository, SqliteReactionRepository } from '@/features/spots/data/local/SqliteMessageRepository';
 import { SqliteSpotRepository } from '@/features/spots/data/local/SqliteSpotRepository';
+import {
+  SupabaseActivityVoteRepository,
+  SupabaseMessageRepository,
+  SupabaseReactionRepository,
+} from '@/features/spots/data/remote/SupabaseMessageRepositories';
+import { SupabaseSpotRepository } from '@/features/spots/data/remote/SupabaseSpotRepository';
+import type { ActivityVoteRepository } from '@/features/spots/domain/repositories/ActivityVoteRepository';
+import type { MessageRepository } from '@/features/spots/domain/repositories/MessageRepository';
+import type { ReactionRepository } from '@/features/spots/domain/repositories/ReactionRepository';
+import type { SpotRepository } from '@/features/spots/domain/repositories/SpotRepository';
 import { ExecutorchFishDetector } from '@/features/spots/data/recognition/executorch/ExecutorchFishDetector';
 import { ExecutorchSpeciesEmbedder } from '@/features/spots/data/recognition/executorch/ExecutorchSpeciesEmbedder';
 import { MODEL_ASSETS, SPECIES_HEAD } from '@/features/spots/data/recognition/executorch/modelAssets';
@@ -65,7 +89,10 @@ import { GetLocalWeather } from '@/features/weather/domain/usecases/GetLocalWeat
  * COMPOSITION ROOT : le seul endroit qui sait quelles implémentations concrètes
  * sont utilisées. Les écrans ne voient que les cas d'usage et les interfaces.
  *
- * Pour brancher la vraie connexion Facebook/Apple, on remplacera FakeAuthRepository ici, et nulle part ailleurs.
+ * Deux modes, choisis par le fichier .env :
+ * - SERVEUR (EXPO_PUBLIC_SUPABASE_URL + EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY remplis) : vraie connexion
+ *   Facebook/Apple/Google, spots, discussions, blocages et signalements partagés via Supabase ;
+ * - LOCAL (rien de rempli) : tout reste sur le téléphone, connexion simulée (développement, démo).
  */
 export interface Dependencies {
   languagePreference: LanguagePreference;
@@ -73,6 +100,7 @@ export interface Dependencies {
   getMyCatches: GetMyCatches;
   signInWithProvider: SignInWithProvider;
   signOut: SignOut;
+  restoreSession: RestoreSession;
   getMapSpots: GetMapSpots;
   createSpot: CreateSpot;
   getSpotDetail: GetSpotDetail;
@@ -103,7 +131,6 @@ export interface Dependencies {
 }
 
 export function createDependencies(): Dependencies {
-  const authRepository = new FakeAuthRepository();
   // Base SQLite locale « spot.db » : les spots restent disponibles hors connexion.
   // Chaque feature apporte ses migrations ; on les réunit ici.
   const database = createDatabaseProvider('spot.db', [
@@ -112,17 +139,46 @@ export function createDependencies(): Dependencies {
     ...USAGE_MIGRATIONS,
     ...MODERATION_MIGRATIONS,
   ]);
-  const spotRepository = new SqliteSpotRepository(database);
-  const messageRepository = new SqliteMessageRepository(database);
-  const reactionRepository = new SqliteReactionRepository(database);
-  const voteRepository = new SqliteActivityVoteRepository(database);
   const idGenerator = new RandomIdGenerator();
   const externalApps = new NativeExternalApps();
-  // Blocages : la carte et les discussions masquent les personnes bloquées.
-  const blockRepository = new SqliteBlockRepository(database);
-  // Compte côté serveur SIMULÉ (comme la connexion) : à remplacer par le vrai backend ici.
-  const accountRepository = new FakeAccountRepository();
   const accountPreferences = new KvAccountPreferencesRepository();
+  const localEraser = new SqliteAccountDataEraser(database);
+
+  // Données partagées : sur le serveur Supabase s'il est configuré, sinon dans la base du téléphone.
+  let authRepository: AuthRepository;
+  let spotRepository: SpotRepository;
+  let messageRepository: MessageRepository;
+  let reactionRepository: ReactionRepository;
+  let voteRepository: ActivityVoteRepository;
+  let blockRepository: BlockRepository;
+  let reportRepository: ReportRepository;
+  let accountRepository: AccountRepository;
+  let accountDataEraser: AccountDataEraser;
+  if (isSupabaseConfigured()) {
+    const supabase = getSupabase();
+    authRepository = new SupabaseAuthRepository(supabase);
+    spotRepository = new SupabaseSpotRepository(supabase);
+    messageRepository = new SupabaseMessageRepository(supabase);
+    reactionRepository = new SupabaseReactionRepository(supabase);
+    voteRepository = new SupabaseActivityVoteRepository(supabase);
+    // Blocages et signalements sur le serveur : ils valent sur tous les téléphones et arrivent à la modération.
+    blockRepository = new SupabaseBlockRepository(supabase);
+    reportRepository = new SupabaseReportRepository(supabase);
+    accountRepository = new SupabaseAccountRepository(supabase);
+    // Suppression du compte : le serveur d'abord (fonction delete-account), puis ce qui reste sur le téléphone.
+    accountDataEraser = new CompositeAccountDataEraser([new SupabaseAccountDataEraser(supabase), localEraser]);
+  } else {
+    authRepository = new FakeAuthRepository();
+    spotRepository = new SqliteSpotRepository(database);
+    messageRepository = new SqliteMessageRepository(database);
+    reactionRepository = new SqliteReactionRepository(database);
+    voteRepository = new SqliteActivityVoteRepository(database);
+    blockRepository = new SqliteBlockRepository(database);
+    reportRepository = new SqliteReportRepository(database);
+    // Compte côté serveur SIMULÉ, comme la connexion.
+    accountRepository = new FakeAccountRepository();
+    accountDataEraser = localEraser;
+  }
 
   // L'app est gratuite : l'analyse IA de l'activité des poissons (payante pour nous) a une limite par jour et par téléphone.
   const freeQuota = new FreeQuota(new SqliteUsageRepository(database));
@@ -153,6 +209,7 @@ export function createDependencies(): Dependencies {
     getMyCatches: new GetMyCatches(spotRepository, messageRepository),
     signInWithProvider: new SignInWithProvider(authRepository),
     signOut: new SignOut(authRepository),
+    restoreSession: new RestoreSession(authRepository),
     getMapSpots: new GetMapSpots(spotRepository, blockRepository),
     createSpot: new CreateSpot(spotRepository, voteRepository, idGenerator),
     getSpotDetail: new GetSpotDetail(spotRepository, messageRepository, reactionRepository, voteRepository, blockRepository),
@@ -180,8 +237,8 @@ export function createDependencies(): Dependencies {
     photoService: new ExpoPhotoService(),
     directionsService: externalApps,
     shareService: externalApps,
-    // Signalements gardés sur le téléphone en attendant le serveur de modération (colonne sent_at prévue).
-    reportContent: new ReportContent(new SqliteReportRepository(database), idGenerator),
+    // Signalements : envoyés à la modération (Supabase), ou gardés sur le téléphone en mode local.
+    reportContent: new ReportContent(reportRepository, idGenerator),
     blockUser: new BlockUser(blockRepository),
     unblockUser: new UnblockUser(blockRepository),
     getBlockedUsers: new GetBlockedUsers(blockRepository),
@@ -189,6 +246,6 @@ export function createDependencies(): Dependencies {
     updateAccountPreferences: new UpdateAccountPreferences(accountPreferences),
     getLinkedProviders: new GetLinkedProviders(accountRepository),
     linkProvider: new LinkProvider(accountRepository),
-    deleteAccount: new DeleteAccount(accountRepository, new SqliteAccountDataEraser(database), accountPreferences),
+    deleteAccount: new DeleteAccount(accountRepository, accountDataEraser, accountPreferences),
   };
 }

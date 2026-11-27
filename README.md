@@ -13,12 +13,14 @@ Application mobile iOS et Android (React Native + Expo, TypeScript) pour repére
 - Sprint 8 (menu : Appâts → Google Maps, Mes prises) : [docs/SPRINT-8.md](docs/SPRINT-8.md)
 - Sprint 9 (l'app en arabe, français et anglais) : [docs/SPRINT-9.md](docs/SPRINT-9.md)
 - Sprint 10 (compte, confidentialité, signalement et blocage) : [docs/SPRINT-10.md](docs/SPRINT-10.md)
+- Serveur (Supabase : comptes, spots partagés, discussions, modération) : [docs/BACKEND.md](docs/BACKEND.md)
 
 ```bash
 npm install
 npx expo run:android   # première fois (development build)
 npx expo start         # ensuite
 npm test               # tests unitaires
+npm run test:db        # tests de sécurité de la base (vrai Postgres, sans Docker)
 ```
 
 Carte : MapLibre + OpenFreeMap. Données © contributeurs OpenStreetMap. Météo : Open-Meteo.com.
