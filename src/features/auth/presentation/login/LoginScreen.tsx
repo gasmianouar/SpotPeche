@@ -4,6 +4,7 @@ import { ImageBackground, Platform, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useI18n } from '@/core/i18n/useI18n';
+import { useLanguageChooser } from '@/core/i18n/useLanguageChooser';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 
 import { LanguagePicker } from './components/LanguagePicker';
@@ -20,26 +21,25 @@ const SEA_BACKGROUND = require('../../../../../assets/login-sea.jpg');
  */
 export function LoginScreen() {
   const { uiState, signIn } = useLoginViewModel();
-  const { t, isRTL, language, languages, choose } = useI18n();
+  const { t, language, languages } = useI18n();
+  const choose = useLanguageChooser();
   const isBusy = uiState.loadingProvider !== null;
-  // Arabe : texte aligné à droite, lu de droite à gauche.
-  const direction = isRTL ? styles.rtl : styles.ltr;
 
   return (
     <ImageBackground source={SEA_BACKGROUND} resizeMode="cover" style={styles.background}>
       <StatusBar style="light" />
       <SafeAreaView style={styles.screen}>
         <View style={styles.hero}>
-          <View style={[styles.brandRow, isRTL && styles.rowReverse]}>
+          <View style={styles.brandRow}>
             <View style={styles.logo}>
               <Ionicons name="location-outline" size={28} color={colors.night} />
             </View>
             <Text style={styles.brand}>Spot</Text>
           </View>
-          <Text accessibilityRole="header" style={[styles.title, direction]}>
+          <Text accessibilityRole="header" style={styles.title}>
             {t('login.title')}
           </Text>
-          <Text style={[styles.subtitle, direction]}>{t('login.subtitle')}</Text>
+          <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
         </View>
 
         {/* La connexion, presque au milieu de l'écran. */}
@@ -85,7 +85,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   hero: { paddingTop: spacing.xxl, paddingHorizontal: spacing.xxl, gap: spacing.md },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  rowReverse: { flexDirection: 'row-reverse' },
   logo: {
     width: 52,
     height: 52,
@@ -95,10 +94,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   brand: { fontFamily: fonts.displayBold, fontSize: 44, color: colors.surface, letterSpacing: -1 },
-  title: { fontFamily: fonts.display, fontSize: 28, lineHeight: 34, color: colors.surface, ...textShadow },
-  subtitle: { fontFamily: fonts.body, fontSize: 16, lineHeight: 24, color: '#DCEBEC', ...textShadow },
-  ltr: { textAlign: 'left', writingDirection: 'ltr' },
-  rtl: { textAlign: 'right', writingDirection: 'rtl' },
+  // textAlign 'left' : en arabe, l'app passe en droite-à-gauche et ce « left » devient la droite.
+  title: { fontFamily: fonts.display, fontSize: 28, lineHeight: 34, color: colors.surface, textAlign: 'left', ...textShadow },
+  subtitle: { fontFamily: fonts.body, fontSize: 16, lineHeight: 24, color: '#DCEBEC', textAlign: 'left', ...textShadow },
   // flex: 1 + centré : le bouton se place au milieu de la place libre, donc presque au milieu de l'écran.
   actions: { flex: 1, justifyContent: 'center', paddingHorizontal: spacing.xl, gap: spacing.md },
   error: {

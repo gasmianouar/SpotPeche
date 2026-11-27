@@ -1,15 +1,19 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import type { TranslationKey } from '@/core/i18n/translations';
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
+import { indexLabelKey, translateReason } from '@/features/weather/presentation/weatherFormat';
 
+import { clock } from '../../domain/services/localFishActivityModel';
 import type { FishingForecast } from '../../domain/entities/FishingForecast';
 import type { ReliabilityValue } from '../../domain/entities/ReliabilityRating';
 import type { ReliabilityCount } from '../../domain/usecases/GetSpotFishingConditions';
 
-const RATINGS: Record<ReliabilityValue, { emoji: string; label: string }> = {
-  reliable: { emoji: '👍', label: 'Fiable' },
-  'so-so': { emoji: '😐', label: 'Moyennement fiable' },
-  wrong: { emoji: '👎', label: 'Pas fiable' },
+const RATINGS: Record<ReliabilityValue, { emoji: string; label: TranslationKey }> = {
+  reliable: { emoji: '👍', label: 'forecast.reliability.reliable' },
+  'so-so': { emoji: '😐', label: 'forecast.reliability.soSo' },
+  wrong: { emoji: '👎', label: 'forecast.reliability.wrong' },
 };
 
 interface Props {
@@ -21,16 +25,25 @@ interface Props {
 
 /** Indice de pêche compact + « Indice fiable ? » (chacun donne son avis, un seul par personne). */
 export function FishingIndexPanel({ forecast, reliability, myRating, onRate }: Props) {
-  const { index } = forecast;
-  const details = [index.summary, ...index.reasons].filter(Boolean).join(' · ');
+  const { t } = useI18n();
+  const { index, bestWindow } = forecast;
+  // Estimation locale : la phrase est recomposée dans la langue de l'app.
+  // Analyse IA : son texte est gardé tel quel (l'agent répond en français).
+  const summary =
+    forecast.source === 'local'
+      ? bestWindow
+        ? `${t('forecast.bestWindow', { start: clock(bestWindow.start), end: clock(bestWindow.end) })}.`
+        : t('forecast.noWindow')
+      : index.summary;
+  const details = [summary, ...index.reasons.map((r) => translateReason(r, t))].filter(Boolean).join(' · ');
   return (
     <View style={styles.card}>
       <View style={styles.row}>
-        <View style={styles.badge} accessibilityLabel={`Indice de pêche ${index.score} sur 5`}>
+        <View style={styles.badge} accessibilityLabel={t('weather.index.a11y', { score: index.score })}>
           <Text style={styles.score}>{index.score}/5</Text>
         </View>
         <View style={styles.texts}>
-          <Text style={styles.title}>Indice de pêche : {index.label.toLowerCase()}</Text>
+          <Text style={styles.title}>{t('weather.index.title', { label: t(indexLabelKey(index.label)) })}</Text>
           {details.length > 0 && (
             <Text style={styles.details} numberOfLines={3}>
               {details}
@@ -39,8 +52,8 @@ export function FishingIndexPanel({ forecast, reliability, myRating, onRate }: P
         </View>
       </View>
 
-      <View style={styles.rating} accessibilityLabel="Fiabilité de l’indice : votre avis">
-        <Text style={styles.ratingLabel}>Indice fiable ?</Text>
+      <View style={styles.rating} accessibilityLabel={t('forecast.reliability.a11y')}>
+        <Text style={styles.ratingLabel}>{t('forecast.reliability.question')}</Text>
         {reliability.map(({ value, count }) => {
           const selected = value === myRating;
           return (
@@ -48,7 +61,7 @@ export function FishingIndexPanel({ forecast, reliability, myRating, onRate }: P
               key={value}
               accessibilityRole="button"
               accessibilityState={{ selected }}
-              accessibilityLabel={`${RATINGS[value].label} : ${count} avis${selected ? ', votre avis' : ''}`}
+              accessibilityLabel={`${t('common.opinions', { label: t(RATINGS[value].label), count })}${selected ? `, ${t('common.yourOpinion')}` : ''}`}
               onPress={() => onRate(value)}
               style={[styles.pill, selected && styles.pillSelected]}
             >

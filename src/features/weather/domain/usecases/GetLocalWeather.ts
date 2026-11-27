@@ -22,6 +22,9 @@ export interface LocalWeather {
  *
  * Les étapes 2 et 3 partent en parallèle (Promise.all) : l'écran s'affiche plus vite.
  */
+/** Nom affiché quand la ville est inconnue (traduit par l'écran). */
+export const CURRENT_POSITION_NAME = 'Position actuelle';
+
 export class GetLocalWeather {
   constructor(
     private readonly locationService: LocationService,
@@ -40,7 +43,7 @@ export class GetLocalWeather {
     ]);
 
     return {
-      place: { name: cityName ?? 'Position actuelle', coordinates, isFallback: gpsPosition === null },
+      place: { name: cityName ?? CURRENT_POSITION_NAME, coordinates, isFallback: gpsPosition === null },
       forecast,
       fishingIndex: computeFishingIndex(forecast),
       moonPhase: moonPhase(this.now()).name,

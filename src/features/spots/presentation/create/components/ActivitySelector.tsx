@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius } from '@/core/theme/tokens';
 
 import type { FishActivity } from '../../../domain/entities/Spot';
@@ -13,9 +14,10 @@ interface Props {
 
 /** « Activité des poissons » : un seul choix possible (comme des boutons radio). */
 export function ActivitySelector({ value, onChange }: Props) {
+  const { t } = useI18n();
   return (
-    <View style={styles.card} accessibilityRole="radiogroup" accessibilityLabel="Activité des poissons">
-      <Text style={styles.title}>Activité des poissons</Text>
+    <View style={styles.card} accessibilityRole="radiogroup" accessibilityLabel={t('activity.title')}>
+      <Text style={styles.title}>{t('activity.title')}</Text>
       <View style={styles.row}>
         {ACTIVITY_OPTIONS.map((option) => {
           const selected = option.value === value;
@@ -24,12 +26,12 @@ export function ActivitySelector({ value, onChange }: Props) {
               key={option.value}
               accessibilityRole="radio"
               accessibilityState={{ checked: selected }}
-              accessibilityLabel={option.label}
+              accessibilityLabel={t(option.label)}
               onPress={() => onChange(option.value)}
               style={[styles.option, selected && styles.optionSelected]}
             >
               <Text style={styles.emoji}>{option.emoji}</Text>
-              <Text style={styles.label}>{option.label}</Text>
+              <Text style={styles.label}>{t(option.label)}</Text>
             </Pressable>
           );
         })}

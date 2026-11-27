@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, spacing } from '@/core/theme/tokens';
 import { IconButton } from '@/shared/ui/IconButton';
 
@@ -10,15 +11,16 @@ interface Props {
 
 /** Barre du haut : menu à gauche, titre, bouton « + » (créer un spot) à droite. */
 export function HomeToolbar({ onMenuPress, onCreatePress }: Props) {
+  const { t } = useI18n();
   return (
     <View style={styles.bar}>
-      <IconButton icon="menu" accessibilityLabel="Ouvrir le menu" onPress={onMenuPress} />
+      <IconButton icon="menu" accessibilityLabel={t('home.menu')} onPress={onMenuPress} />
       <Text accessibilityRole="header" style={styles.title}>
         Spot
       </Text>
       <IconButton
         icon="add"
-        accessibilityLabel="Créer un spot"
+        accessibilityLabel={t('home.create')}
         onPress={onCreatePress}
         style={styles.addButton}
         size={26}

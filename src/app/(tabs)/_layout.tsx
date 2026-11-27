@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router/js-tabs';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts } from '@/core/theme/tokens';
 import { AppDrawer } from '@/features/menu/presentation/AppDrawer';
 
@@ -10,6 +11,7 @@ import { AppDrawer } from '@/features/menu/presentation/AppDrawer';
  * fichiers sans apparaître dans l'URL.
  */
 export default function TabsLayout() {
+  const { t } = useI18n();
   // Fragment <>…</> : on renvoie les onglets ET le menu latéral, posé par-dessus.
   return (
     <>
@@ -25,7 +27,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Accueil',
+            title: t('tabs.home'),
             tabBarIcon: ({ color, focused }) => (
               <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color as string} />
             ),
@@ -34,7 +36,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="meteo"
           options={{
-            title: 'Météo',
+            title: t('tabs.weather'),
             tabBarIcon: ({ color, focused }) => (
               <Ionicons name={focused ? 'cloud' : 'cloud-outline'} size={22} color={color as string} />
             ),

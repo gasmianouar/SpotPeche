@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 
 import { MENU_ITEMS, type MenuItem } from './menuItems';
@@ -19,6 +20,7 @@ const ANIMATION_MS = 220;
  */
 export function AppDrawer() {
   const { isOpen, close, user, isActive, select, confirmSignOut, openCredits } = useDrawerViewModel();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
 
   // Valeur animée : 0 = menu caché à gauche, 1 = menu ouvert.
@@ -43,7 +45,7 @@ export function AppDrawer() {
     <Modal visible={visible} transparent animationType="none" onRequestClose={close} statusBarTranslucent>
       {/* Fond assombri : le toucher ferme le menu. */}
       <Animated.View style={[StyleSheet.absoluteFill, styles.scrim, { opacity: progress }]}>
-        <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Fermer le menu" onPress={close} />
+        <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel={t('menu.close')} onPress={close} />
       </Animated.View>
 
       <Animated.View accessibilityViewIsModal style={[styles.drawer, { transform: [{ translateX }] }]}>
@@ -51,9 +53,9 @@ export function AppDrawer() {
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initials(user?.displayName)}</Text>
           </View>
-          <Text style={styles.name}>{user?.displayName ?? 'Invité'}</Text>
+          <Text style={styles.name}>{user?.displayName ?? t('menu.guest')}</Text>
           <Text style={styles.provider}>
-            {user ? `Connecté avec ${user.provider === 'apple' ? 'Apple' : 'Facebook'}` : ''}
+            {user ? t('menu.connectedWith', { provider: user.provider === 'apple' ? 'Apple' : 'Facebook' }) : ''}
           </Text>
         </View>
 
@@ -67,12 +69,12 @@ export function AppDrawer() {
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Se déconnecter"
+          accessibilityLabel={t('menu.signOut')}
           onPress={confirmSignOut}
           style={({ pressed }) => [styles.row, styles.signOut, pressed && styles.pressed]}
         >
           <Ionicons name="log-out-outline" size={22} color="#B42318" />
-          <Text style={[styles.rowLabel, styles.signOutLabel]}>Se déconnecter</Text>
+          <Text style={[styles.rowLabel, styles.signOutLabel]}>{t('menu.signOut')}</Text>
         </Pressable>
 
         {/* Mention des licences, discrète : obligation des licences MIT et Apache 2.0 des modèles embarqués. */}
@@ -82,7 +84,7 @@ export function AppDrawer() {
           hitSlop={8}
           style={({ pressed }) => [styles.credits, { marginBottom: insets.bottom + spacing.md }, pressed && styles.pressed]}
         >
-          <Text style={styles.creditsLabel}>Composants open source</Text>
+          <Text style={styles.creditsLabel}>{t('menu.credits')}</Text>
         </Pressable>
       </Animated.View>
     </Modal>
@@ -90,6 +92,7 @@ export function AppDrawer() {
 }
 
 function DrawerRow({ item, active, onPress }: { item: MenuItem; active: boolean; onPress: () => void }) {
+  const { t } = useI18n();
   return (
     <Pressable
       accessibilityRole="button"
@@ -99,8 +102,8 @@ function DrawerRow({ item, active, onPress }: { item: MenuItem; active: boolean;
     >
       <Ionicons name={item.icon} size={22} color={active ? colors.primary : (item.iconColor ?? colors.ink)} />
       <View style={styles.rowTexts}>
-        <Text style={[styles.rowLabel, active && styles.rowLabelActive]}>{item.label}</Text>
-        {item.subtitle && <Text style={styles.rowSubtitle}>{item.subtitle}</Text>}
+        <Text style={[styles.rowLabel, active && styles.rowLabelActive]}>{t(item.label)}</Text>
+        {item.subtitle && <Text style={styles.rowSubtitle}>{t(item.subtitle)}</Text>}
       </View>
       {item.destination.kind === 'nearbyBaitShops' && <Ionicons name="open-outline" size={18} color={colors.muted} />}
     </Pressable>

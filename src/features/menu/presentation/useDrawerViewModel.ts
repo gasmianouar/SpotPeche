@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { Alert } from 'react-native';
 
 import { useDependencies } from '@/core/di/DependenciesProvider';
+import { useI18n } from '@/core/i18n/useI18n';
 import { useSessionStore } from '@/features/auth/presentation/state/sessionStore';
 
 import { useDrawerStore } from './drawerStore';
@@ -17,6 +18,7 @@ export function useDrawerViewModel() {
   const { isOpen, close } = useDrawerStore();
   const user = useSessionStore((s) => s.user);
   const clearSession = useSessionStore((s) => s.clear);
+  const { t } = useI18n();
 
   const isActive = (item: MenuItem) => {
     const d = item.destination;
@@ -37,11 +39,11 @@ export function useDrawerViewModel() {
       } else {
         // On quitte Spot pour Google Maps, qui cherche autour de la position du téléphone.
         findNearbyBaitShops.execute().catch(() =>
-          Alert.alert('Appâts', 'Impossible d’ouvrir Google Maps. Vérifiez qu’un navigateur ou l’app Google Maps est installé.'),
+          Alert.alert(t('menu.baitShops'), t('menu.mapsError')),
         );
       }
     },
-    [close, router, findNearbyBaitShops],
+    [close, router, findNearbyBaitShops, t],
   );
 
   /** Petit lien en bas du menu : les mentions des composants open source. */
@@ -63,11 +65,11 @@ export function useDrawerViewModel() {
   }, [close, signOut, clearSession]);
 
   const confirmSignOut = useCallback(() => {
-    Alert.alert('Se déconnecter ?', 'Vos spots restent enregistrés sur ce téléphone.', [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Se déconnecter', style: 'destructive', onPress: signOutNow },
+    Alert.alert(t('menu.signOutQuestion'), t('menu.signOutHint'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('menu.signOut'), style: 'destructive', onPress: signOutNow },
     ]);
-  }, [signOutNow]);
+  }, [signOutNow, t]);
 
   return { isOpen, close, user, isActive, select, confirmSignOut, openCredits };
 }

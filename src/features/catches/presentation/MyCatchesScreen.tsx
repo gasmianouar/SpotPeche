@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 import { IconButton } from '@/shared/ui/IconButton';
 
@@ -12,14 +13,15 @@ import { useMyCatchesViewModel } from './useMyCatchesViewModel';
 /** VUE « Mes prises » (écran 2d de la maquette) : les photos de mes prises, avec lieu et date. */
 export function MyCatchesScreen() {
   const vm = useMyCatchesViewModel();
+  const { t } = useI18n();
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.screen}>
       <View style={styles.header}>
-        <IconButton icon="chevron-back" accessibilityLabel="Retour" onPress={vm.back} />
+        <IconButton icon="chevron-back" accessibilityLabel={t('common.back')} onPress={vm.back} />
         <View style={styles.headerTexts}>
           <Text accessibilityRole="header" style={styles.title}>
-            Mes prises
+            {t('catches.title')}
           </Text>
           {vm.uiState.status === 'ready' && <Text style={styles.summary}>{vm.summary}</Text>}
         </View>
@@ -34,10 +36,10 @@ export function MyCatchesScreen() {
       {vm.uiState.status === 'error' && (
         <View style={styles.centered}>
           <Text accessibilityRole="alert" style={styles.message}>
-            {vm.uiState.message}
+            {t('catches.error')}
           </Text>
           <Pressable accessibilityRole="button" onPress={vm.retry} style={styles.retry}>
-            <Text style={styles.retryLabel}>Réessayer</Text>
+            <Text style={styles.retryLabel}>{t('common.retry')}</Text>
           </Pressable>
         </View>
       )}
@@ -51,15 +53,15 @@ export function MyCatchesScreen() {
           contentContainerStyle={styles.list}
           ListHeaderComponent={
             // Contrôle segmenté : les trois filtres partagent la largeur, toujours sur une seule ligne.
-            <View accessibilityRole="radiogroup" accessibilityLabel="Période" style={styles.periods}>
+            <View accessibilityRole="radiogroup" accessibilityLabel={t('catches.period')} style={styles.periods}>
               {vm.periods.map((p) => {
-                const selected = p.value === vm.period;
+                const selected = p === vm.period;
                 return (
                   <Pressable
-                    key={p.value}
+                    key={p}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: selected }}
-                    onPress={() => vm.setPeriod(p.value)}
+                    onPress={() => vm.setPeriod(p)}
                     style={[styles.period, selected && styles.periodSelected]}
                   >
                     <Text
@@ -68,7 +70,7 @@ export function MyCatchesScreen() {
                       adjustsFontSizeToFit
                       minimumFontScale={0.85}
                     >
-                      {p.label}
+                      {t(`catches.period.${p}`)}
                     </Text>
                   </Pressable>
                 );
@@ -79,12 +81,11 @@ export function MyCatchesScreen() {
             <View style={styles.empty}>
               <Ionicons name="fish-outline" size={44} color={colors.primary} />
               <Text style={styles.emptyTitle}>
-                {vm.uiState.catches.length === 0 ? 'Pas encore de prise' : 'Aucune prise sur cette période'}
+                {vm.uiState.catches.length === 0 ? t('catches.empty.title') : t('catches.empty.period')}
               </Text>
               {vm.uiState.catches.length === 0 && (
                 <Text style={styles.message}>
-                  Publiez la photo d’une prise sur un spot (à sa création ou dans la discussion) : elle apparaîtra ici,
-                  avec le lieu et la date.
+                  {t('catches.empty.hint')}
                 </Text>
               )}
             </View>

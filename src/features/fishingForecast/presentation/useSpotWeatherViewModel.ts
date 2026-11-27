@@ -9,7 +9,7 @@ import type { SpotFishingConditions } from '../domain/usecases/GetSpotFishingCon
 
 export type SpotWeatherUiState =
   | { status: 'loading' }
-  | { status: 'error'; message: string }
+  | { status: 'error' }
   | {
       status: 'ready';
       conditions: SpotFishingConditions;
@@ -53,7 +53,7 @@ export function useSpotWeatherViewModel(spotId: string) {
       if (isCurrent()) setUiState({ status: 'ready', conditions, isAnalyzing: false });
     } catch {
       if (isCurrent()) {
-        setUiState({ status: 'error', message: 'Impossible de récupérer la météo du spot. Vérifiez votre connexion.' });
+        setUiState({ status: 'error' });
       }
     }
   }, [getSpotDetail, getSpotFishingConditions, spotId, userId]);

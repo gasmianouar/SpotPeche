@@ -3,12 +3,15 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { NavigationApp } from '@/core/external/ExternalApps';
+import type { TranslationKey } from '@/core/i18n/translations';
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
+import { flipIfRtl } from '@/shared/ui/directionalIcon';
 
 /** Les deux apps proposées. Pastille à leur couleur, avec une icône neutre (pas leurs logos). */
-const APPS: { app: NavigationApp; label: string; hint: string; color: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { app: 'google-maps', label: 'Google Maps', hint: 'Trajet en voiture, à pied ou en transports', color: '#1A73E8', icon: 'map-outline' },
-  { app: 'waze', label: 'Waze', hint: 'Trajet en voiture, trafic en temps réel', color: '#33CCFF', icon: 'car-outline' },
+const APPS: { app: NavigationApp; label: string; hint: TranslationKey; color: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { app: 'google-maps', label: 'Google Maps', hint: 'directions.googleHint', color: '#1A73E8', icon: 'map-outline' },
+  { app: 'waze', label: 'Waze', hint: 'directions.wazeHint', color: '#33CCFF', icon: 'car-outline' },
 ];
 
 interface Props {
@@ -21,17 +24,18 @@ interface Props {
 /** Feuille « Itinéraire vers le spot » : ouvrir avec Google Maps ou Waze (écran 5b de la maquette). */
 export function DirectionsSheet({ visible, notice, onPick, onClose }: Props) {
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.overlay}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Fermer" onPress={onClose} style={styles.backdrop} />
+        <Pressable accessibilityRole="button" accessibilityLabel={t('common.close')} onPress={onClose} style={styles.backdrop} />
         <View accessibilityViewIsModal style={[styles.sheet, { paddingBottom: spacing.lg + insets.bottom }]}>
           <View style={styles.handle} />
           <View style={styles.titles}>
             <Text accessibilityRole="header" style={styles.title}>
-              Itinéraire vers le spot
+              {t('directions.title')}
             </Text>
-            <Text style={styles.subtitle}>Trajet complet depuis votre position actuelle. Ouvrir avec :</Text>
+            <Text style={styles.subtitle}>{t('directions.subtitle')}</Text>
           </View>
 
           <View style={styles.list}>
@@ -39,7 +43,7 @@ export function DirectionsSheet({ visible, notice, onPick, onClose }: Props) {
               <Pressable
                 key={a.app}
                 accessibilityRole="button"
-                accessibilityLabel={`Ouvrir l’itinéraire avec ${a.label}`}
+                accessibilityLabel={t('directions.openWith', { app: a.label })}
                 onPress={() => onPick(a.app)}
                 style={({ pressed }) => [styles.row, pressed && styles.pressed]}
               >
@@ -48,9 +52,9 @@ export function DirectionsSheet({ visible, notice, onPick, onClose }: Props) {
                 </View>
                 <View style={styles.rowTexts}>
                   <Text style={styles.rowLabel}>{a.label}</Text>
-                  <Text style={styles.rowHint}>{a.hint}</Text>
+                  <Text style={styles.rowHint}>{t(a.hint)}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+                <Ionicons name="chevron-forward" size={18} color={colors.muted} style={flipIfRtl('chevron-forward')} />
               </Pressable>
             ))}
           </View>
@@ -62,7 +66,7 @@ export function DirectionsSheet({ visible, notice, onPick, onClose }: Props) {
           )}
 
           <Pressable accessibilityRole="button" onPress={onClose} style={({ pressed }) => [styles.cancel, pressed && styles.pressed]}>
-            <Text style={styles.cancelLabel}>Annuler</Text>
+            <Text style={styles.cancelLabel}>{t('common.cancel')}</Text>
           </Pressable>
         </View>
       </View>

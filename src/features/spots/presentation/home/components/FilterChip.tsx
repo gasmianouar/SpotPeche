@@ -1,14 +1,16 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 
 /** Pastille « Mes spots ✕ » en haut de la carte : un toucher réaffiche tous les spots. */
 export function FilterChip({ label, onClear }: { label: string; onClear: () => void }) {
+  const { t } = useI18n();
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${label}. Toucher pour afficher tous les spots`}
+      accessibilityLabel={t('home.filterA11y', { label })}
       onPress={onClear}
       style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
     >

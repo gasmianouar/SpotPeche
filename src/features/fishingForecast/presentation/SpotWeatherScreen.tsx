@@ -3,9 +3,10 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 import { moonPhase } from '@/features/weather/domain/services/moonPhase';
-import { formatClock } from '@/features/weather/presentation/weatherFormat';
+import { formatClock, moonPhaseKey } from '@/features/weather/presentation/weatherFormat';
 import { IconButton } from '@/shared/ui/IconButton';
 
 import { CompactCurrentWeather } from './components/CompactCurrentWeather';
@@ -20,22 +21,23 @@ import { useSpotWeatherViewModel } from './useSpotWeatherViewModel';
  */
 export function SpotWeatherScreen({ spotId }: { spotId: string }) {
   const { uiState, coordinates, retry, rate, back } = useSpotWeatherViewModel(spotId);
+  const { t } = useI18n();
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.screen}>
       <StatusBar style="dark" />
       <View style={styles.header}>
-        <IconButton icon="chevron-back" accessibilityLabel="Retour à la fiche du spot" onPress={back} />
+        <IconButton icon="chevron-back" accessibilityLabel={t('forecast.backToSpot')} onPress={back} />
         <View style={styles.headerTexts}>
           <Text accessibilityRole="header" style={styles.title}>
-            Météo du spot
+            {t('forecast.title')}
           </Text>
           <View style={styles.placeRow}>
             <Ionicons name="location" size={13} color={colors.muted} />
             <Text style={styles.place} numberOfLines={1}>
               {coordinates
-                ? `GPS du spot · ${coordinates.latitude.toFixed(4)}, ${coordinates.longitude.toFixed(4)}`
-                : 'Localisation du spot…'}
+                ? t('forecast.spotGps', { coordinates: `${coordinates.latitude.toFixed(4)}, ${coordinates.longitude.toFixed(4)}` })
+                : t('forecast.locating')}
             </Text>
           </View>
         </View>
@@ -44,7 +46,7 @@ export function SpotWeatherScreen({ spotId }: { spotId: string }) {
       {uiState.status === 'loading' && (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.message}>Récupération de la météo du spot…</Text>
+          <Text style={styles.message}>{t('forecast.loading')}</Text>
         </View>
       )}
 
@@ -52,10 +54,10 @@ export function SpotWeatherScreen({ spotId }: { spotId: string }) {
         <View style={styles.centered}>
           <Ionicons name="cloud-offline-outline" size={44} color={colors.muted} />
           <Text accessibilityRole="alert" style={styles.message}>
-            {uiState.message}
+            {t('forecast.error')}
           </Text>
           <Pressable accessibilityRole="button" onPress={retry} style={styles.retry}>
-            <Text style={styles.retryLabel}>Réessayer</Text>
+            <Text style={styles.retryLabel}>{t('common.retry')}</Text>
           </Pressable>
         </View>
       )}
@@ -75,7 +77,7 @@ export function SpotWeatherScreen({ spotId }: { spotId: string }) {
           <View style={styles.twoColumns}>
             {uiState.conditions.weather.daily[0] && (
               <View style={styles.smallCard}>
-                <Text style={styles.smallLabel}>Lever / coucher</Text>
+                <Text style={styles.smallLabel}>{t('weather.sunriseSunset')}</Text>
                 <Text style={styles.smallValue}>
                   {formatClock(uiState.conditions.weather.daily[0].sunrise)} ·{' '}
                   {formatClock(uiState.conditions.weather.daily[0].sunset)}
@@ -83,11 +85,11 @@ export function SpotWeatherScreen({ spotId }: { spotId: string }) {
               </View>
             )}
             <View style={styles.smallCard}>
-              <Text style={styles.smallLabel}>Lune</Text>
-              <Text style={styles.smallValue}>{moonPhase(new Date()).name}</Text>
+              <Text style={styles.smallLabel}>{t('weather.moon')}</Text>
+              <Text style={styles.smallValue}>{t(moonPhaseKey(moonPhase(new Date()).name))}</Text>
             </View>
           </View>
-          <Text style={styles.credit}>Données météo : Open-Meteo.com</Text>
+          <Text style={styles.credit}>{t('weather.credit')}</Text>
         </ScrollView>
       )}
     </SafeAreaView>

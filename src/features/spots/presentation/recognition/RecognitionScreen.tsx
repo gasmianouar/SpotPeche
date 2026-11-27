@@ -3,15 +3,19 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 import { IconButton } from '@/shared/ui/IconButton';
 
+import { catalogName } from '../catalog/catalogName';
+import { recognitionNoteText } from './recognitionNotes';
 import { useRecognitionViewModel } from './useRecognitionViewModel';
 
 const percent = (confidence: number) => `${Math.round(confidence * 100)} %`;
 
 /** VUE de la reconnaissance de l'espèce par photo (écran 3b de la maquette). */
 export function RecognitionScreen({ onAccept }: { onAccept: (itemId: string) => void }) {
+  const { t, language } = useI18n();
   const { uiState, takePhoto, pickPhoto, accept, close } = useRecognitionViewModel(onAccept);
   const photoUri = uiState.status === 'noPhoto' ? null : uiState.photoUri;
   const [best, ...others] = uiState.status === 'done' ? uiState.results : [];
@@ -20,38 +24,38 @@ export function RecognitionScreen({ onAccept }: { onAccept: (itemId: string) => 
     <SafeAreaView edges={['top', 'bottom']} style={styles.screen}>
       <StatusBar style="light" />
       <View style={styles.header}>
-        <IconButton icon="chevron-back" color={colors.surface} accessibilityLabel="Retour" onPress={close} />
+        <IconButton icon="chevron-back" color={colors.surface} accessibilityLabel={t('common.back')} onPress={close} />
         <Text accessibilityRole="header" style={styles.headerTitle}>
-          Reconnaître l’espèce
+          {t('recognition.title')}
         </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.photoBox}>
           {photoUri ? (
-            <Image source={{ uri: photoUri }} style={StyleSheet.absoluteFill} resizeMode="cover" accessibilityLabel="Photo à analyser" />
+            <Image source={{ uri: photoUri }} style={StyleSheet.absoluteFill} resizeMode="cover" accessibilityLabel={t('recognition.photoA11y')} />
           ) : (
             <Ionicons name="camera-outline" size={56} color={colors.nightText} />
           )}
           {uiState.status === 'analyzing' && (
             <View style={styles.badge}>
               <ActivityIndicator size="small" color={colors.accent} />
-              <Text style={styles.badgeText}>Analyse par l’agent IA…</Text>
+              <Text style={styles.badgeText}>{t('recognition.analyzing')}</Text>
             </View>
           )}
           {uiState.status === 'done' && (
             <View style={styles.badge}>
               <Ionicons name={uiState.isDemo ? 'flask-outline' : 'sparkles'} size={14} color={colors.accent} />
-              <Text style={styles.badgeText}>{uiState.isDemo ? 'Exemple (mode démo)' : 'Analysé sur le téléphone'}</Text>
+              <Text style={styles.badgeText}>{uiState.isDemo ? t('recognition.demoBadge') : t('recognition.onDeviceBadge')}</Text>
             </View>
           )}
         </View>
 
         {uiState.status === 'noPhoto' && (
           <View style={styles.sheet}>
-            <Text style={styles.sheetText}>Prenez une photo nette, de profil et en pleine lumière.</Text>
-            <PrimaryButton icon="camera-outline" label="Prendre une photo" onPress={takePhoto} />
-            <SecondaryButton icon="images-outline" label="Choisir dans la galerie" onPress={pickPhoto} />
+            <Text style={styles.sheetText}>{t('recognition.tips')}</Text>
+            <PrimaryButton icon="camera-outline" label={t('create.takePhoto')} onPress={takePhoto} />
+            <SecondaryButton icon="images-outline" label={t('create.pickPhotos')} onPress={pickPhoto} />
           </View>
         )}
 
@@ -59,56 +63,56 @@ export function RecognitionScreen({ onAccept }: { onAccept: (itemId: string) => 
           <View style={styles.sheet}>
             {uiState.unavailable && <Ionicons name="cloud-offline-outline" size={28} color={colors.accent} style={styles.limitIcon} />}
             <Text accessibilityRole="alert" style={styles.sheetText}>
-              {uiState.message}
+              {recognitionNoteText(uiState.message, t)}
             </Text>
             {uiState.unavailable ? (
-              <PrimaryButton icon="list-outline" label="Choisir dans la liste" onPress={close} />
+              <PrimaryButton icon="list-outline" label={t('recognition.pickFromList')} onPress={close} />
             ) : (
-              <PrimaryButton icon="camera-outline" label="Reprendre une photo" onPress={takePhoto} />
+              <PrimaryButton icon="camera-outline" label={t('recognition.retake')} onPress={takePhoto} />
             )}
           </View>
         )}
 
         {uiState.status === 'done' && best && (
           <View style={styles.sheet}>
-            <Text style={styles.overline}>Résultat</Text>
+            <Text style={styles.overline}>{t('recognition.result')}</Text>
             <View style={styles.resultRow}>
               <View style={styles.resultNames}>
-                <Text style={styles.resultName}>{best.item.name}</Text>
+                <Text style={styles.resultName}>{catalogName(best.item, language)}</Text>
                 {best.item.latinName && <Text style={styles.resultLatin}>{best.item.latinName}</Text>}
               </View>
               <Text style={styles.resultPercent}>{percent(best.confidence)}</Text>
             </View>
-            <View accessibilityRole="progressbar" accessibilityLabel={`Confiance ${percent(best.confidence)}`} style={styles.bar}>
+            <View accessibilityRole="progressbar" accessibilityLabel={t('recognition.confidence', { percent: percent(best.confidence) })} style={styles.bar}>
               <View style={[styles.barFill, { width: `${Math.round(best.confidence * 100)}%` }]} />
             </View>
             {others.length > 0 && (
               <View style={styles.others}>
-                <Text style={styles.othersLabel}>Autres possibilités :</Text>
+                <Text style={styles.othersLabel}>{t('recognition.others')}</Text>
                 {others.map((result) => (
                   <Pressable
                     key={result.item.id}
                     accessibilityRole="button"
-                    accessibilityLabel={`Choisir ${result.item.name}`}
+                    accessibilityLabel={t('recognition.chooseA11y', { name: catalogName(result.item, language) })}
                     onPress={() => accept(result)}
                     style={styles.otherChip}
                   >
                     <Text style={styles.otherText}>
-                      {result.item.name} {percent(result.confidence)}
+                      {catalogName(result.item, language)} {percent(result.confidence)}
                     </Text>
                   </Pressable>
                 ))}
               </View>
             )}
             <View style={styles.actions}>
-              <SecondaryButton icon="camera-outline" label="Reprendre" onPress={takePhoto} flex />
-              <PrimaryButton label={`Ajouter ${best.item.name.toLowerCase()}`} onPress={() => accept(best)} flex />
+              <SecondaryButton icon="camera-outline" label={t('recognition.retakeShort')} onPress={takePhoto} flex />
+              <PrimaryButton label={t('recognition.add', { name: language === 'fr' ? catalogName(best.item, language).toLowerCase() : catalogName(best.item, language) })} onPress={() => accept(best)} flex />
             </View>
-            {uiState.note && !uiState.isDemo && <Text style={styles.agentNote}>« {uiState.note} »</Text>}
+            {uiState.note && !uiState.isDemo && <Text style={styles.agentNote}>« {recognitionNoteText(uiState.note, t)} »</Text>}
             <Text style={styles.note}>
               {uiState.isDemo
-                ? 'Mode démo : la photo n’est pas analysée, ce sont des résultats d’exemple.'
-                : 'Proposition calculée sur le téléphone, à vérifier.'}
+                ? t('recognition.demoNote')
+                : t('recognition.verifyNote')}
             </Text>
           </View>
         )}

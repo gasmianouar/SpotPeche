@@ -2,13 +2,14 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useDependencies } from '@/core/di/DependenciesProvider';
+import { useI18n } from '@/core/i18n/useI18n';
 import { LocationUnavailableError } from '@/core/location/LocationService';
 import { useSessionStore } from '@/features/auth/presentation/state/sessionStore';
 import type { Coordinates } from '@/shared/domain/Coordinates';
 
 import { findCatalogItems, type CatalogKind } from '../../domain/entities/Catalog';
 import type { FishActivity } from '../../domain/entities/Spot';
-import { SpotValidationError } from '../../domain/usecases/CreateSpot';
+import { DESCRIPTION_MAX_LENGTH, SpotValidationError } from '../../domain/usecases/CreateSpot';
 import { MAX_PHOTOS, useSpotDraftStore } from './spotDraftStore';
 
 export interface CreateSpotErrors {
@@ -19,6 +20,7 @@ export interface CreateSpotErrors {
 
 /** VIEWMODEL de l'écran « Nouveau spot ». Le brouillon vit dans spotDraftStore. */
 export function useCreateSpotViewModel() {
+  const { t } = useI18n();
   const router = useRouter();
   const { createSpot, preciseLocationService, photoService } = useDependencies();
   const user = useSessionStore((s) => s.user);
@@ -37,7 +39,7 @@ export function useCreateSpotViewModel() {
       // son choix manuel gagne, on n'écrase pas.
       if (useSpotDraftStore.getState().positionSource === 'map') return;
       if (!position) {
-        setErrors((e) => ({ ...e, coordinates: 'Localisation refusée : déplacez la carte pour placer le spot.' }));
+        setErrors((e) => ({ ...e, coordinates: t('create.error.denied') }));
         return;
       }
       useSpotDraftStore.getState().setPosition(position.coordinates, 'gps', position.accuracyMeters);
@@ -45,13 +47,13 @@ export function useCreateSpotViewModel() {
       if (useSpotDraftStore.getState().positionSource === 'map') return;
       const message =
         error instanceof LocationUnavailableError && error.reason === 'servicesDisabled'
-          ? 'Localisation du téléphone désactivée : déplacez la carte pour placer le spot.'
-          : 'Signal GPS introuvable : déplacez la carte pour placer le spot.';
+          ? t('create.error.disabled')
+          : t('create.error.noSignal');
       setErrors((e) => ({ ...e, coordinates: message }));
     } finally {
       setIsLocating(false);
     }
-  }, [preciseLocationService]);
+  }, [preciseLocationService, t]);
 
   // Au premier affichage uniquement (le retour depuis le choix des espèces ne relance rien).
   const started = useRef(false);
@@ -88,6 +90,15 @@ export function useCreateSpotViewModel() {
     draft.addPhotos(uris);
   }, [photoService, draft]);
 
+  /** Les erreurs de validation du domaine, traduites (le domaine ne connaît que le champ et la règle). */
+  const validationMessage = useCallback(
+    (error: SpotValidationError) => {
+      if (error.field === 'description') return t('create.error.tooLong', { max: DESCRIPTION_MAX_LENGTH });
+      return error.message.startsWith('Position invalide') ? t('create.error.invalidPosition') : t('create.error.noCoordinates');
+    },
+    [t],
+  );
+
   const save = useCallback(async () => {
     setIsSaving(true);
     setErrors({});
@@ -107,14 +118,14 @@ export function useCreateSpotViewModel() {
       });
     } catch (error) {
       if (error instanceof SpotValidationError) {
-        setErrors({ [error.field]: error.message });
+        setErrors({ [error.field]: validationMessage(error) });
       } else {
-        setErrors({ general: "L'enregistrement a échoué. Réessayez." });
+        setErrors({ general: t('create.error.save') });
       }
     } finally {
       setIsSaving(false);
     }
-  }, [createSpot, draft, user, router]);
+  }, [createSpot, draft, user, router, t, validationMessage]);
 
   /** Flèche retour : on abandonne le brouillon. */
   const cancel = useCallback(() => {

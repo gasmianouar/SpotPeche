@@ -4,7 +4,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 
 import { DependenciesProvider } from '@/core/di/DependenciesProvider';
-import { RestoreLanguage } from '@/core/i18n/useI18n';
+import { RestoreLanguage } from '@/core/i18n/useLanguageChooser';
 import { useSessionStore } from '@/features/auth/presentation/state/sessionStore';
 
 /**

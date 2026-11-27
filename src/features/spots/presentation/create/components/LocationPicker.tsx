@@ -2,6 +2,7 @@ import { Camera, Map, type CameraRef } from '@maplibre/maplibre-react-native';
 import { useEffect, useRef } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 import type { Coordinates } from '@/shared/domain/Coordinates';
 
@@ -39,6 +40,7 @@ export function LocationPicker({
   onMapMoved,
   onMapTouch,
 }: Props) {
+  const { t } = useI18n();
   const cameraRef = useRef<CameraRef>(null);
 
   // Une position GPS vient d'arriver : la caméra s'y déplace.
@@ -51,7 +53,7 @@ export function LocationPicker({
   return (
     <View style={styles.section}>
       <Text accessibilityRole="header" style={styles.title}>
-        Emplacement
+        {t('create.location')}
       </Text>
       {/* Sans ça, un glissement vertical sur la carte ferait défiler la page au lieu de la carte. */}
       <View
@@ -80,13 +82,13 @@ export function LocationPicker({
         <View pointerEvents="none" style={styles.centerPin}>
           <Image source={PIN_MINE} style={styles.pinImage} />
         </View>
-        <Text style={styles.mapHint}>Déplacez la carte pour placer le spot</Text>
+        <Text style={styles.mapHint}>{t('create.moveMap')}</Text>
       </View>
 
       {isLocating && !coordinates ? (
         <View style={styles.locating} accessibilityLiveRegion="polite">
           <ActivityIndicator size="small" color={colors.primary} />
-          <Text style={styles.coordsEmpty}>Recherche de votre position GPS…</Text>
+          <Text style={styles.coordsEmpty}>{t('create.locating')}</Text>
         </View>
       ) : (
         <Text style={[styles.coords, !coordinates && styles.coordsEmpty]}>
@@ -94,8 +96,8 @@ export function LocationPicker({
             ? `${coordinates.latitude.toFixed(6)}, ${coordinates.longitude.toFixed(6)}` +
               (positionSource === 'gps'
                 ? ` · GPS${accuracyMeters != null ? ` ±${Math.round(accuracyMeters)} m` : ''}`
-                : ' · placé sur la carte')
-            : 'Aucune position choisie'}
+                : ` · ${t('create.placedOnMap')}`)
+            : t('create.noPosition')}
         </Text>
       )}
       {error && (

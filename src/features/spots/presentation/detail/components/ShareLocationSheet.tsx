@@ -3,6 +3,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ShareTarget } from '@/core/external/ExternalApps';
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 import type { Coordinates } from '@/shared/domain/Coordinates';
 
@@ -10,7 +11,7 @@ import type { Coordinates } from '@/shared/domain/Coordinates';
 const TARGETS: { target: ShareTarget; label: string; color: string; soft: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { target: 'whatsapp', label: 'WhatsApp', color: '#25D366', soft: '#EAF8EF', icon: 'chatbubble-ellipses-outline' },
   { target: 'messenger', label: 'Messenger', color: '#0084FF', soft: '#E6F2FF', icon: 'chatbubbles-outline' },
-  { target: 'other', label: 'Autres', color: colors.muted, soft: colors.ground, icon: 'ellipsis-horizontal' },
+  { target: 'other', label: 'share.others', color: colors.muted, soft: colors.ground, icon: 'ellipsis-horizontal' },
 ];
 
 interface Props {
@@ -26,17 +27,20 @@ interface Props {
 /** Feuille « Partager la localisation » (écran 5c de la maquette). */
 export function ShareLocationSheet({ visible, ownerName, coordinates, link, notice, onShare, onClose }: Props) {
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
+  // « WhatsApp » et « Messenger » sont des noms de marques : seul « Autres » se traduit.
+  const targetLabel = (label: string) => (label === 'share.others' ? t('share.others') : label);
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.overlay}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Fermer le partage" onPress={onClose} style={styles.backdrop} />
+        <Pressable accessibilityRole="button" accessibilityLabel={t('share.close')} onPress={onClose} style={styles.backdrop} />
         <View accessibilityViewIsModal style={[styles.sheet, { paddingBottom: spacing.lg + insets.bottom }]}>
           <View style={styles.handle} />
           <View style={styles.titles}>
             <Text accessibilityRole="header" style={styles.title}>
-              Partager la localisation
+              {t('share.title')}
             </Text>
-            <Text style={styles.subtitle}>Vos amis reçoivent la position du spot et peuvent lancer le trajet.</Text>
+            <Text style={styles.subtitle}>{t('share.subtitle')}</Text>
           </View>
 
           <View style={styles.preview}>
@@ -45,7 +49,7 @@ export function ShareLocationSheet({ visible, ownerName, coordinates, link, noti
             </View>
             <View style={styles.previewTexts}>
               <Text style={styles.previewTitle} numberOfLines={1}>
-                📍 Spot de {ownerName}
+                {t('share.previewTitle', { owner: ownerName })}
               </Text>
               <Text style={styles.previewLine}>
                 GPS {coordinates.latitude.toFixed(4)}, {coordinates.longitude.toFixed(4)}
@@ -57,18 +61,18 @@ export function ShareLocationSheet({ visible, ownerName, coordinates, link, noti
           </View>
 
           <View style={styles.targets}>
-            {TARGETS.map((t) => (
+            {TARGETS.map((target) => (
               <Pressable
-                key={t.target}
+                key={target.target}
                 accessibilityRole="button"
-                accessibilityLabel={t.target === 'other' ? 'Partager avec une autre app' : `Partager la position du spot via ${t.label}`}
-                onPress={() => onShare(t.target)}
-                style={({ pressed }) => [styles.target, { backgroundColor: t.soft }, pressed && styles.pressed]}
+                accessibilityLabel={target.target === 'other' ? t('share.otherA11y') : t('share.viaA11y', { app: target.label })}
+                onPress={() => onShare(target.target)}
+                style={({ pressed }) => [styles.target, { backgroundColor: target.soft }, pressed && styles.pressed]}
               >
-                <View style={[styles.targetIcon, { backgroundColor: t.color }]}>
-                  <Ionicons name={t.icon} size={24} color={colors.surface} />
+                <View style={[styles.targetIcon, { backgroundColor: target.color }]}>
+                  <Ionicons name={target.icon} size={24} color={colors.surface} />
                 </View>
-                <Text style={styles.targetLabel}>{t.label}</Text>
+                <Text style={styles.targetLabel}>{targetLabel(target.label)}</Text>
               </Pressable>
             ))}
           </View>
@@ -80,7 +84,7 @@ export function ShareLocationSheet({ visible, ownerName, coordinates, link, noti
           )}
 
           <Pressable accessibilityRole="button" onPress={onClose} style={({ pressed }) => [styles.cancel, pressed && styles.pressed]}>
-            <Text style={styles.cancelLabel}>Annuler</Text>
+            <Text style={styles.cancelLabel}>{t('common.cancel')}</Text>
           </Pressable>
         </View>
       </View>

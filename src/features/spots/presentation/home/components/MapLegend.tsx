@@ -1,13 +1,15 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 
 /** Petite légende en bas à gauche de la carte. En mode « Mes spots », une seule ligne. */
 export function MapLegend({ onlyMine }: { onlyMine: boolean }) {
+  const { t } = useI18n();
   return (
     <View style={styles.card}>
-      <LegendRow color={colors.mine} label="Mes spots" />
-      {!onlyMine && <LegendRow color={colors.community} label="Communauté" />}
+      <LegendRow color={colors.mine} label={t('home.legendMine')} />
+      {!onlyMine && <LegendRow color={colors.community} label={t('home.legendCommunity')} />}
     </View>
   );
 }

@@ -1,5 +1,6 @@
 import type Ionicons from '@expo/vector-icons/Ionicons';
 
+import type { TranslationKey } from '@/core/i18n/translations';
 import { colors } from '@/core/theme/tokens';
 import type { SpotFilter } from '@/features/spots/domain/usecases/GetMapSpots';
 
@@ -15,34 +16,35 @@ export type MenuDestination =
 
 export interface MenuItem {
   id: string;
-  label: string;
+  /** Libellé, traduit à l'affichage. */
+  label: TranslationKey;
   /** Petite ligne sous le libellé (facultative). */
-  subtitle?: string;
+  subtitle?: TranslationKey;
   icon: keyof typeof Ionicons.glyphMap;
   iconColor?: string;
   destination: MenuDestination;
 }
 
 export const MENU_ITEMS: MenuItem[] = [
-  { id: 'map', label: 'Carte des spots', icon: 'map-outline', destination: { kind: 'map', filter: 'all' } },
+  { id: 'map', label: 'menu.map', icon: 'map-outline', destination: { kind: 'map', filter: 'all' } },
   {
     id: 'mySpots',
-    label: 'Mes spots',
+    label: 'menu.mySpots',
     icon: 'location-outline',
     iconColor: colors.mine,
     destination: { kind: 'map', filter: 'mine' },
   },
   {
     id: 'baitShops',
-    label: 'Appâts',
-    subtitle: 'Boutiques les plus proches · Google Maps',
+    label: 'menu.baitShops',
+    subtitle: 'menu.baitShopsSubtitle',
     icon: 'storefront-outline',
     destination: { kind: 'nearbyBaitShops' },
   },
   {
     id: 'catches',
-    label: 'Mes prises',
-    subtitle: 'Photos, lieux et dates',
+    label: 'menu.catches',
+    subtitle: 'menu.catchesSubtitle',
     icon: 'fish-outline',
     destination: { kind: 'route', href: '/mes-prises' },
   },

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { DEFAULT_POSITION } from '@/core/location/LocationService';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 import { IconButton } from '@/shared/ui/IconButton';
@@ -18,6 +19,7 @@ import { useCreateSpotViewModel } from './useCreateSpotViewModel';
 /** VUE de l'écran « Nouveau spot » (écran 3 de la maquette). */
 export function CreateSpotScreen() {
   const vm = useCreateSpotViewModel();
+  const { t } = useI18n();
   const { draft, errors } = vm;
   // Défilement coupé tant que le doigt est sur la mini-carte (état purement visuel : il reste dans la vue).
   const [scrollEnabled, setScrollEnabled] = useState(true);
@@ -26,9 +28,9 @@ export function CreateSpotScreen() {
     <SafeAreaView edges={['top', 'bottom']} style={styles.screen}>
       <StatusBar style="dark" />
       <View style={styles.header}>
-        <IconButton icon="chevron-back" accessibilityLabel="Retour" onPress={vm.cancel} />
+        <IconButton icon="chevron-back" accessibilityLabel={t('common.back')} onPress={vm.cancel} />
         <Text accessibilityRole="header" style={styles.headerTitle}>
-          Nouveau spot
+          {t('create.title')}
         </Text>
       </View>
 
@@ -53,13 +55,13 @@ export function CreateSpotScreen() {
 
           <CatalogSelection
             kind="species"
-            title="Espèces présentes"
+            title={t('create.species')}
             items={draft.species}
             onChoose={() => vm.openPicker('species')}
           />
           <CatalogSelection
             kind="bait"
-            title="Appâts utilisés"
+            title={t('create.baits')}
             items={draft.baits}
             onChoose={() => vm.openPicker('bait')}
           />
@@ -93,7 +95,7 @@ export function CreateSpotScreen() {
           onPress={vm.save}
           style={({ pressed }) => [styles.saveButton, pressed && styles.pressed]}
         >
-          {vm.isSaving ? <ActivityIndicator color={colors.surface} /> : <Text style={styles.saveLabel}>Enregistrer le spot</Text>}
+          {vm.isSaving ? <ActivityIndicator color={colors.surface} /> : <Text style={styles.saveLabel}>{t('create.save')}</Text>}
         </Pressable>
       </View>
     </SafeAreaView>

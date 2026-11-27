@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, spacing } from '@/core/theme/tokens';
 
 import type { FishActivity } from '../../../domain/entities/Spot';
@@ -14,9 +15,10 @@ interface Props {
 
 /** « Ça mord ? » : trois petites pastilles emoji + nombre d'avis. Un seul avis par personne. */
 export function ActivityVoteBar({ votes, myVote, onVote }: Props) {
+  const { t } = useI18n();
   return (
-    <View style={styles.row} accessibilityLabel="Activité des poissons : votre avis">
-      <Text style={styles.label}>Ça mord ?</Text>
+    <View style={styles.row} accessibilityLabel={t('detail.voteA11y')}>
+      <Text style={styles.label}>{t('detail.biting')}</Text>
       {votes.map(({ activity, count }) => {
         const option = activityOption(activity);
         if (!option) return null;
@@ -26,7 +28,7 @@ export function ActivityVoteBar({ votes, myVote, onVote }: Props) {
             key={activity}
             accessibilityRole="button"
             accessibilityState={{ selected }}
-            accessibilityLabel={`${option.label} : ${count} avis${selected ? ', votre avis' : ''}`}
+            accessibilityLabel={`${t('common.opinions', { label: t(option.label), count })}${selected ? `, ${t('common.yourOpinion')}` : ''}`}
             onPress={() => onVote(activity)}
             style={[styles.pill, selected && styles.pillSelected]}
           >

@@ -1,0 +1,47 @@
+import { defineTexts } from './defineTexts';
+
+/** Textes communs à plusieurs écrans. */
+export const commonTexts = defineTexts({
+  fr: {
+    'common.back': 'Retour',
+    'common.retry': 'Réessayer',
+    'common.cancel': 'Annuler',
+    'common.close': 'Fermer',
+    'common.add': 'Ajouter',
+    'common.ok': 'OK',
+    'common.fisher': 'Pêcheur',
+    'common.yourOpinion': 'votre avis',
+    'common.opinions': '{label} : {count} avis',
+    'common.justNow': 'À l’instant',
+    'common.today': 'Aujourd’hui',
+    'common.atTime': '{date} à {time}',
+  },
+  en: {
+    'common.back': 'Back',
+    'common.retry': 'Try again',
+    'common.cancel': 'Cancel',
+    'common.close': 'Close',
+    'common.add': 'Add',
+    'common.ok': 'OK',
+    'common.fisher': 'Angler',
+    'common.yourOpinion': 'your vote',
+    'common.opinions': '{label}: {count} votes',
+    'common.justNow': 'Just now',
+    'common.today': 'Today',
+    'common.atTime': '{date} at {time}',
+  },
+  ar: {
+    'common.back': 'رجوع',
+    'common.retry': 'إعادة المحاولة',
+    'common.cancel': 'إلغاء',
+    'common.close': 'إغلاق',
+    'common.add': 'إضافة',
+    'common.ok': 'حسنًا',
+    'common.fisher': 'صيّاد',
+    'common.yourOpinion': 'رأيك',
+    'common.opinions': '{label}: {count} رأي',
+    'common.justNow': 'الآن',
+    'common.today': 'اليوم',
+    'common.atTime': '{date} على الساعة {time}',
+  },
+});

@@ -3,6 +3,8 @@ import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-nat
 
 import { colors, touchTarget } from '@/core/theme/tokens';
 
+import { flipIfRtl } from './directionalIcon';
+
 interface Props {
   icon: keyof typeof Ionicons.glyphMap;
   /** Lu par VoiceOver / TalkBack : obligatoire pour un bouton sans texte. */
@@ -23,7 +25,7 @@ export function IconButton({ icon, accessibilityLabel, onPress, color = colors.i
       onPress={onPress}
       style={({ pressed }) => [styles.base, style, pressed && styles.pressed]}
     >
-      <Ionicons name={icon} size={size} color={color} />
+      <Ionicons name={icon} size={size} color={color} style={flipIfRtl(icon)} />
     </Pressable>
   );
 }

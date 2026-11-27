@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, radius } from '@/core/theme/tokens';
 
 interface Props {
@@ -13,15 +14,16 @@ interface Props {
  * une rangée de miniatures, chacune avec un ✕ pour la retirer.
  */
 export function SpotPhotos({ uris, onRemove }: Props) {
+  const { t } = useI18n();
   if (uris.length === 0) return null;
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
       {uris.map((uri, index) => (
         <View key={uri} style={styles.photo}>
-          <Image source={{ uri }} style={StyleSheet.absoluteFill} accessibilityLabel={`Photo ${index + 1}`} />
+          <Image source={{ uri }} style={StyleSheet.absoluteFill} accessibilityLabel={t('create.photo', { number: index + 1 })} />
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Retirer la photo ${index + 1}`}
+            accessibilityLabel={t('create.removePhoto', { number: index + 1 })}
             hitSlop={8}
             onPress={() => onRemove(uri)}
             style={styles.remove}

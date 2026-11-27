@@ -4,25 +4,31 @@ import { StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 
 import type { CurrentWeather } from '../../domain/entities/Weather';
-import { conditionIcon, conditionLabel, formatTemperature, windDirectionLabel } from '../weatherFormat';
+import { useI18n } from '@/core/i18n/useI18n';
+
+import { conditionIcon, conditionKey, formatTemperature, windDirectionLabel } from '../weatherFormat';
 
 /** Grande carte sombre : température actuelle, vent, pression, humidité. */
 export function CurrentWeatherCard({ current }: { current: CurrentWeather }) {
+  const { t, language } = useI18n();
   return (
     <View style={styles.card}>
       <View style={styles.top}>
         <View style={styles.main}>
-          <Text style={styles.caption}>Maintenant</Text>
+          <Text style={styles.caption}>{t('weather.now')}</Text>
           <Text style={styles.temperature}>{formatTemperature(current.temperature)}</Text>
-          <Text style={styles.condition}>{conditionLabel(current.condition)}</Text>
-          <Text style={styles.caption}>Ressenti {formatTemperature(current.apparentTemperature)}</Text>
+          <Text style={styles.condition}>{t(conditionKey(current.condition))}</Text>
+          <Text style={styles.caption}>{t('weather.feelsLike', { temperature: formatTemperature(current.apparentTemperature) })}</Text>
         </View>
         <Ionicons name={conditionIcon(current.condition)} size={84} color={colors.accent} />
       </View>
       <View style={styles.metrics}>
-        <Metric label="Vent" value={`${Math.round(current.windSpeed)} km/h ${windDirectionLabel(current.windDirection)}`} />
-        <Metric label="Pression" value={`${Math.round(current.pressure)} hPa`} />
-        <Metric label="Humidité" value={`${Math.round(current.humidity)} %`} />
+        <Metric
+          label={t('weather.wind')}
+          value={`${Math.round(current.windSpeed)} km/h ${windDirectionLabel(current.windDirection, language)}`}
+        />
+        <Metric label={t('weather.pressure')} value={`${Math.round(current.pressure)} hPa`} />
+        <Metric label={t('weather.humidity')} value={`${Math.round(current.humidity)} %`} />
       </View>
     </View>
   );

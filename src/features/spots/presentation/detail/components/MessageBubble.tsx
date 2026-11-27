@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { memo } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, spacing, touchTarget } from '@/core/theme/tokens';
 import { Avatar } from '@/shared/ui/Avatar';
 
@@ -26,7 +27,8 @@ interface Props {
  */
 export const MessageBubble = memo(function MessageBubble({ view, reactionsOpen, onToggleReactions, onReact, onReply }: Props) {
   const { message, isMine, isCreatorPost, reactions, myReaction } = view;
-  const authorName = message.author.name || 'Pêcheur';
+  const { t, language } = useI18n();
+  const authorName = message.author.name || t('common.fisher');
   const reactionText = reactions.map((r) => (r.count > 1 ? `${r.emoji} ${r.count}` : r.emoji)).join(' ');
 
   return (
@@ -40,7 +42,7 @@ export const MessageBubble = memo(function MessageBubble({ view, reactionsOpen, 
         {!isMine && (
           <Text style={styles.author}>
             {authorName}
-            {isCreatorPost ? ' · créateur' : ''}
+            {isCreatorPost ? t('message.creator') : ''}
           </Text>
         )}
 
@@ -49,7 +51,7 @@ export const MessageBubble = memo(function MessageBubble({ view, reactionsOpen, 
             key={uri}
             source={{ uri }}
             style={styles.photo}
-            accessibilityLabel={`Photo ${index + 1} de ${authorName}`}
+            accessibilityLabel={t('message.photo', { number: index + 1, author: authorName })}
           />
         ))}
 
@@ -59,7 +61,7 @@ export const MessageBubble = memo(function MessageBubble({ view, reactionsOpen, 
               {message.replyTo && (
                 <View style={[styles.quote, isMine && styles.quoteMine]}>
                   <Text style={[styles.quoteText, isMine && styles.textOnDark]} numberOfLines={2}>
-                    Réponse à {message.replyTo.authorName} : {message.replyTo.excerpt}
+                    {t('message.replyTo', { author: message.replyTo.authorName, excerpt: message.replyTo.excerpt === 'Photo' ? t('message.photoExcerpt') : message.replyTo.excerpt })}
                   </Text>
                 </View>
               )}
@@ -67,7 +69,7 @@ export const MessageBubble = memo(function MessageBubble({ view, reactionsOpen, 
             </View>
             {reactions.length > 0 && (
               <View style={[styles.reactions, isMine ? styles.reactionsMine : styles.reactionsOther]}>
-                <Text style={styles.reactionsText} accessibilityLabel={`Réactions : ${reactionText}`}>
+                <Text style={styles.reactionsText} accessibilityLabel={t('message.reactions', { reactions: reactionText })}>
                   {reactionText}
                 </Text>
               </View>
@@ -79,7 +81,7 @@ export const MessageBubble = memo(function MessageBubble({ view, reactionsOpen, 
         )}
 
         <View style={[styles.actions, isMine && styles.actionsMine]}>
-          <Text style={styles.time}>{formatMessageTime(message.createdAt)}</Text>
+          <Text style={styles.time}>{formatMessageTime(message.createdAt, language)}</Text>
           <Pressable
             accessibilityRole="button"
             accessibilityState={{ expanded: reactionsOpen }}
@@ -88,16 +90,16 @@ export const MessageBubble = memo(function MessageBubble({ view, reactionsOpen, 
             style={styles.action}
           >
             <Ionicons name="happy-outline" size={16} color={colors.muted} />
-            <Text style={styles.actionLabel}>Réagir</Text>
+            <Text style={styles.actionLabel}>{t('message.react')}</Text>
           </Pressable>
           <Pressable accessibilityRole="button" hitSlop={6} onPress={() => onReply(view)} style={styles.action}>
             <Ionicons name="arrow-undo-outline" size={16} color={colors.muted} />
-            <Text style={styles.actionLabel}>Répondre</Text>
+            <Text style={styles.actionLabel}>{t('message.reply')}</Text>
           </Pressable>
         </View>
 
         {reactionsOpen && (
-          <View accessibilityLabel="Choisir une réaction" style={[styles.picker, isMine && styles.pickerMine]}>
+          <View accessibilityLabel={t('message.chooseReaction')} style={[styles.picker, isMine && styles.pickerMine]}>
             {REACTION_EMOJIS.map((emoji) => {
               const selected = emoji === myReaction;
               return (
@@ -105,7 +107,7 @@ export const MessageBubble = memo(function MessageBubble({ view, reactionsOpen, 
                   key={emoji}
                   accessibilityRole="button"
                   accessibilityState={{ selected }}
-                  accessibilityLabel={`Réagir ${emoji}`}
+                  accessibilityLabel={t('message.reactWith', { emoji })}
                   onPress={() => onReact(message.id, emoji)}
                   style={[styles.emoji, selected && styles.emojiSelected]}
                 >

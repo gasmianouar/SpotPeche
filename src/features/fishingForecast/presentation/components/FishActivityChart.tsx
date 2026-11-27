@@ -1,18 +1,25 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import type { TranslationKey } from '@/core/i18n/translations';
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
+import { FREE_DAILY_LIMITS } from '@/features/freeQuota/domain/FreeQuota';
 
 import type { ActivityLevel, FishingForecast } from '../../domain/entities/FishingForecast';
 import { clock } from '../../domain/services/localFishActivityModel';
 
-const LEVELS: Record<ActivityLevel, { emoji: string; label: string; color: string }> = {
-  good: { emoji: '🤩', label: 'ça mord bien', color: colors.mine },
-  medium: { emoji: '😐', label: 'moyen', color: colors.accent },
-  none: { emoji: '😴', label: 'faible', color: '#A9B7B9' },
+const LEVELS: Record<ActivityLevel, { emoji: string; label: TranslationKey; color: string }> = {
+  good: { emoji: '🤩', label: 'forecast.level.good', color: colors.mine },
+  medium: { emoji: '😐', label: 'forecast.level.medium', color: colors.accent },
+  none: { emoji: '😴', label: 'forecast.level.none', color: '#A9B7B9' },
 };
 
-const CONFIDENCE = { low: 'confiance faible', medium: 'confiance moyenne', high: 'confiance élevée' } as const;
+const CONFIDENCE: Record<FishingForecast['confidence'], TranslationKey> = {
+  low: 'forecast.confidence.low',
+  medium: 'forecast.confidence.medium',
+  high: 'forecast.confidence.high',
+};
 const BAR_MAX = 64;
 
 interface Props {
@@ -22,14 +29,15 @@ interface Props {
 
 /** « Activité des poissons » heure par heure : emoji + barre, meilleur moment, et qui a calculé. */
 export function FishActivityChart({ forecast, isAnalyzing }: Props) {
+  const { t } = useI18n();
   const best = forecast.bestWindow;
   return (
     <View style={styles.card}>
       <View style={styles.header}>
         <Text accessibilityRole="header" style={styles.title}>
-          Activité des poissons
+          {t('forecast.activity.title')}
         </Text>
-        <Text style={styles.caption}>heure par heure</Text>
+        <Text style={styles.caption}>{t('forecast.activity.hourly')}</Text>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.bars}>
@@ -37,7 +45,7 @@ export function FishActivityChart({ forecast, isAnalyzing }: Props) {
           const look = LEVELS[hour.level];
           const inBest = !!best && hour.localTime >= best.start && hour.localTime < best.end;
           return (
-            <View key={hour.localTime} style={styles.item} accessibilityLabel={`${clock(hour.localTime)} : activité ${look.label}`}>
+            <View key={hour.localTime} style={styles.item} accessibilityLabel={t('forecast.activity.hourA11y', { hour: clock(hour.localTime), level: t(look.label) })}>
               <Text style={styles.emoji}>{look.emoji}</Text>
               <View style={styles.track}>
                 <View style={[styles.bar, { height: Math.max(4, (hour.score / 100) * BAR_MAX), backgroundColor: look.color }]} />
@@ -51,7 +59,7 @@ export function FishActivityChart({ forecast, isAnalyzing }: Props) {
       {best && (
         <Text style={styles.best}>
           <Text style={styles.bestStrong}>
-            Meilleur moment : {clock(best.start)} – {clock(best.end)}
+            {t('forecast.bestWindow', { start: clock(best.start), end: clock(best.end) })}
           </Text>
         </Text>
       )}
@@ -59,7 +67,7 @@ export function FishActivityChart({ forecast, isAnalyzing }: Props) {
       {forecast.freeLimitReached && !isAnalyzing && (
         <View accessibilityRole="alert" style={styles.limit}>
           <Ionicons name="hourglass-outline" size={16} color="#8A4B06" />
-          <Text style={styles.limitText}>{forecast.fallbackReason}</Text>
+          <Text style={styles.limitText}>{t('forecast.freeLimit', { limit: FREE_DAILY_LIMITS['fish-activity'] })}</Text>
         </View>
       )}
 
@@ -67,21 +75,21 @@ export function FishActivityChart({ forecast, isAnalyzing }: Props) {
         {isAnalyzing ? (
           <>
             <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={styles.sourceText}>Analyse par l’agent IA en cours… (estimation locale en attendant)</Text>
+            <Text style={styles.sourceText}>{t('forecast.analyzing')}</Text>
           </>
         ) : forecast.source === 'ai' ? (
           <>
             <Ionicons name="sparkles" size={14} color={colors.accent} />
             <Text style={styles.sourceText}>
-              Analyse IA · {forecast.model ?? 'Claude'} · {CONFIDENCE[forecast.confidence]}
+              {t('forecast.aiSource', { model: forecast.model ?? 'Claude', confidence: t(CONFIDENCE[forecast.confidence]) })}
             </Text>
           </>
         ) : (
           <>
             <Ionicons name="calculator-outline" size={14} color={colors.muted} />
             <Text style={styles.sourceText}>
-              {forecast.freeLimitReached ? 'Estimation locale.' : (forecast.fallbackReason ?? 'Estimation locale.')} Calculée selon la
-              lumière, la pression, le vent et la lune.
+              {forecast.fallbackReason && !forecast.freeLimitReached ? `${t('forecast.aiUnreachable')} ` : ''}
+              {t('forecast.localSource')}
             </Text>
           </>
         )}

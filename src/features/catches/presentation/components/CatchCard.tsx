@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 
 import type { Catch } from '../../domain/entities/Catch';
@@ -9,12 +10,13 @@ import { formatCatchShortDate } from '../catchFormat';
 
 /** Une prise dans la grille : la photo avec sa date, puis le lieu. */
 export function CatchCard({ item, onPress }: { item: Catch; onPress: () => void }) {
+  const { t, language } = useI18n();
   const [broken, setBroken] = useState(false);
-  const date = formatCatchShortDate(item.takenAt);
+  const date = formatCatchShortDate(item.takenAt, language);
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Prise du ${date}, ${item.placeName}. Voir la photo`}
+      accessibilityLabel={t('catches.card.a11y', { date, place: item.placeName })}
       onPress={onPress}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >

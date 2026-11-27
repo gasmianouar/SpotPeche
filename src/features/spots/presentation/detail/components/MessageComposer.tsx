@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, spacing, touchTarget } from '@/core/theme/tokens';
 
 import type { MessageQuote } from '../../../domain/entities/SpotMessage';
@@ -25,19 +26,20 @@ interface Props {
 
 /** Barre de saisie fixée en bas, comme sur Messenger : 📷 🖼 [ Aa ] ➤ */
 export function MessageComposer(props: Props) {
+  const { t } = useI18n();
   return (
     <View style={styles.container}>
       {props.replyTo && (
         <View style={styles.reply}>
           <View style={styles.replyTexts}>
-            <Text style={styles.replyTitle}>Réponse à {props.replyTo.authorName}</Text>
+            <Text style={styles.replyTitle}>{t('message.replyingTo', { author: props.replyTo.authorName })}</Text>
             <Text style={styles.replyExcerpt} numberOfLines={1}>
               {props.replyTo.excerpt}
             </Text>
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Annuler la réponse"
+            accessibilityLabel={t('message.cancelReply')}
             onPress={props.onCancelReply}
             style={styles.iconButton}
           >
@@ -54,7 +56,7 @@ export function MessageComposer(props: Props) {
       <View style={styles.bar}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Prendre une photo"
+          accessibilityLabel={t('create.takePhoto')}
           disabled={!props.canAddPhotos}
           onPress={props.onTakePhoto}
           style={[styles.iconButton, !props.canAddPhotos && styles.disabled]}
@@ -63,7 +65,7 @@ export function MessageComposer(props: Props) {
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Choisir dans la galerie"
+          accessibilityLabel={t('create.pickPhotos')}
           disabled={!props.canAddPhotos}
           onPress={props.onPickPhotos}
           style={[styles.iconButton, !props.canAddPhotos && styles.disabled]}
@@ -71,7 +73,7 @@ export function MessageComposer(props: Props) {
           <Ionicons name="image" size={24} color={colors.primary} />
         </Pressable>
         <TextInput
-          accessibilityLabel="Écrire un message"
+          accessibilityLabel={t('message.write')}
           value={props.text}
           onChangeText={props.onChangeText}
           placeholder="Aa"
@@ -82,7 +84,7 @@ export function MessageComposer(props: Props) {
         />
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Envoyer"
+          accessibilityLabel={t('message.send')}
           accessibilityState={{ disabled: !props.canSend, busy: props.isSending }}
           disabled={!props.canSend}
           onPress={props.onSend}

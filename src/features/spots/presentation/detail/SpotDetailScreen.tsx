@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 import { IconButton } from '@/shared/ui/IconButton';
 
@@ -17,6 +18,7 @@ import { useSpotDetailViewModel } from './useSpotDetailViewModel';
 
 /** VUE de la fiche spot (écran 5 de la maquette). */
 export function SpotDetailScreen({ spotId }: { spotId: string }) {
+  const { t } = useI18n();
   const vm = useSpotDetailViewModel(spotId);
   const { uiState, composer } = vm;
   const scrollRef = useRef<ScrollViewInstance>(null);
@@ -39,14 +41,14 @@ export function SpotDetailScreen({ spotId }: { spotId: string }) {
     <SafeAreaView edges={['top', 'bottom']} style={styles.screen}>
       <StatusBar style="dark" />
       <View style={styles.header}>
-        <IconButton icon="chevron-back" accessibilityLabel="Retour à la carte" onPress={vm.back} />
+        <IconButton icon="chevron-back" accessibilityLabel={t('detail.backToMap')} onPress={vm.back} />
         <Text accessibilityRole="header" style={styles.title}>
-          Fiche spot
+          {t('detail.title')}
         </Text>
         <IconButton
           icon="partly-sunny-outline"
           color={colors.primary}
-          accessibilityLabel="Météo du spot"
+          accessibilityLabel={t('detail.weather')}
           onPress={vm.openWeather}
         />
       </View>
@@ -61,11 +63,11 @@ export function SpotDetailScreen({ spotId }: { spotId: string }) {
         <View style={styles.centered}>
           <Ionicons name="alert-circle-outline" size={44} color={colors.muted} />
           <Text accessibilityRole="alert" style={styles.message}>
-            {uiState.status === 'notFound' ? 'Ce spot n’existe plus.' : uiState.message}
+            {uiState.status === 'notFound' ? t('detail.notFound') : t('detail.loadError')}
           </Text>
           {uiState.status === 'error' && (
             <Pressable accessibilityRole="button" onPress={vm.retry} style={styles.retry}>
-              <Text style={styles.retryLabel}>Réessayer</Text>
+              <Text style={styles.retryLabel}>{t('common.retry')}</Text>
             </Pressable>
           )}
         </View>
@@ -88,10 +90,10 @@ export function SpotDetailScreen({ spotId }: { spotId: string }) {
 
             <View style={styles.messages}>
               <Text accessibilityRole="header" style={styles.sectionTitle}>
-                Messages
+                {t('detail.messages')}
               </Text>
               {uiState.detail.messages.length === 0 && (
-                <Text style={styles.empty}>Aucun message. Lancez la discussion !</Text>
+                <Text style={styles.empty}>{t('detail.noMessages')}</Text>
               )}
               {uiState.detail.messages.map((view) => (
                 <MessageBubble

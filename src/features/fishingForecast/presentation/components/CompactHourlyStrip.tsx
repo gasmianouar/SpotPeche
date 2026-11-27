@@ -1,21 +1,23 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 import type { HourlyForecast } from '@/features/weather/domain/entities/Weather';
 import { conditionIcon, formatHour, formatTemperature } from '@/features/weather/presentation/weatherFormat';
 
 /** « Heure par heure » en version serrée. */
 export function CompactHourlyStrip({ hours }: { hours: readonly HourlyForecast[] }) {
+  const { t } = useI18n();
   return (
     <View style={styles.card}>
       <Text accessibilityRole="header" style={styles.title}>
-        Heure par heure
+        {t('weather.hourly')}
       </Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {hours.map((hour, i) => (
           <View key={hour.localTime} style={styles.item}>
-            <Text style={styles.hour}>{i === 0 ? 'Maint.' : formatHour(hour.localTime)}</Text>
+            <Text style={styles.hour}>{i === 0 ? t('weather.nowShort') : formatHour(hour.localTime)}</Text>
             <Ionicons name={conditionIcon(hour.condition)} size={20} color={colors.primary} />
             <Text style={styles.temperature}>{formatTemperature(hour.temperature)}</Text>
           </View>

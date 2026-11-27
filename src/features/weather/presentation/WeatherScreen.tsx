@@ -3,7 +3,10 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
+
+import { CURRENT_POSITION_NAME } from '../domain/usecases/GetLocalWeather';
 
 import { Card } from './components/Card';
 import { CurrentWeatherCard } from './components/CurrentWeatherCard';
@@ -11,11 +14,12 @@ import { DailyForecastList } from './components/DailyForecastList';
 import { FishingIndexCard } from './components/FishingIndexCard';
 import { HourlyForecastStrip } from './components/HourlyForecastStrip';
 import { useWeatherViewModel } from './useWeatherViewModel';
-import { formatClock } from './weatherFormat';
+import { formatClock, moonPhaseKey } from './weatherFormat';
 
 /** VUE de l'écran Météo (écran 4 de la maquette). */
 export function WeatherScreen() {
   const { uiState, refresh } = useWeatherViewModel();
+  const { t } = useI18n();
   const weather = uiState.status === 'success' ? uiState.weather : null;
 
   return (
@@ -23,18 +27,18 @@ export function WeatherScreen() {
       <StatusBar style="dark" />
       <View style={styles.header}>
         <Text accessibilityRole="header" style={styles.title}>
-          Météo
+          {t('weather.title')}
         </Text>
         <View style={styles.placeRow}>
           <Ionicons name={weather?.place.isFallback ? 'location-outline' : 'navigate'} size={14} color={colors.muted} />
-          <Text style={styles.place}>{weather ? weather.place.name : 'Localisation…'}</Text>
+          <Text style={styles.place}>{weather ? (weather.place.name === CURRENT_POSITION_NAME ? t('weather.currentPosition') : weather.place.name) : t('weather.locating')}</Text>
         </View>
       </View>
 
       {uiState.status === 'loading' && (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.message}>Récupération de la météo autour de vous…</Text>
+          <Text style={styles.message}>{t('weather.loading')}</Text>
         </View>
       )}
 
@@ -42,10 +46,10 @@ export function WeatherScreen() {
         <View style={styles.centered}>
           <Ionicons name="cloud-offline-outline" size={48} color={colors.muted} />
           <Text accessibilityRole="alert" style={styles.message}>
-            {uiState.message}
+            {t('weather.error')}
           </Text>
           <Pressable accessibilityRole="button" onPress={refresh} style={styles.retry}>
-            <Text style={styles.retryText}>Réessayer</Text>
+            <Text style={styles.retryText}>{t('common.retry')}</Text>
           </Pressable>
         </View>
       )}
@@ -59,7 +63,7 @@ export function WeatherScreen() {
         >
           {weather.place.isFallback && (
             <Text style={styles.notice}>
-              Localisation non autorisée : météo affichée pour le lieu par défaut. Autorisez la localisation dans les réglages pour voir votre ville.
+              {t('weather.fallbackNotice')}
             </Text>
           )}
           <CurrentWeatherCard current={weather.forecast.current} />
@@ -69,20 +73,20 @@ export function WeatherScreen() {
           <View style={styles.twoColumns}>
             {weather.forecast.daily[0] && (
               <Card style={styles.half}>
-                <Text style={styles.smallLabel}>Lever / coucher</Text>
+                <Text style={styles.smallLabel}>{t('weather.sunriseSunset')}</Text>
                 <Text style={styles.smallValue}>
                   {formatClock(weather.forecast.daily[0].sunrise)} · {formatClock(weather.forecast.daily[0].sunset)}
                 </Text>
               </Card>
             )}
             <Card style={styles.half}>
-              <Text style={styles.smallLabel}>Lune</Text>
-              <Text style={styles.smallValue}>{weather.moonPhase}</Text>
+              <Text style={styles.smallLabel}>{t('weather.moon')}</Text>
+              <Text style={styles.smallValue}>{t(moonPhaseKey(weather.moonPhase))}</Text>
             </Card>
           </View>
 
           <DailyForecastList days={weather.forecast.daily} />
-          <Text style={styles.credit}>Données météo : Open-Meteo.com</Text>
+          <Text style={styles.credit}>{t('weather.credit')}</Text>
         </ScrollView>
       )}
     </SafeAreaView>

@@ -2,6 +2,7 @@ import { Camera, Map, Marker, type CameraRef, type ViewState } from '@maplibre/m
 import { useEffect, useRef } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors } from '@/core/theme/tokens';
 import type { Coordinates } from '@/shared/domain/Coordinates';
 
@@ -45,6 +46,7 @@ interface Props {
  * (voir `useIsFocused`), et cette carte repart de la dernière position de caméra.
  */
 export function SpotMap({ spots, initialCamera, userPosition, onSpotPress, onCameraChange }: Props) {
+  const { t } = useI18n();
   const cameraRef = useRef<CameraRef>(null);
 
   // Quand une nouvelle position arrive, la caméra s'y déplace en douceur.
@@ -86,7 +88,7 @@ export function SpotMap({ spots, initialCamera, userPosition, onSpotPress, onCam
           <View
             accessible
             accessibilityRole="button"
-            accessibilityLabel={`${mapSpot.isMine ? 'Mon spot' : 'Spot de la communauté'} : ${mapSpot.spot.name}`}
+            accessibilityLabel={t(mapSpot.isMine ? 'home.markerMine' : 'home.markerCommunity', { name: mapSpot.spot.name })}
           >
             <Image source={mapSpot.isMine ? PIN_MINE : PIN_COMMUNITY} style={styles.pin} />
           </View>
@@ -95,7 +97,7 @@ export function SpotMap({ spots, initialCamera, userPosition, onSpotPress, onCam
 
       {userPosition && (
         <Marker id="user-position" lngLat={toLngLat(userPosition)} anchor="center">
-          <View accessibilityLabel="Votre position" style={styles.userDot} />
+          <View accessibilityLabel={t('home.yourPosition')} style={styles.userDot} />
         </Marker>
       )}
     </Map>

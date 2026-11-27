@@ -2,6 +2,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import type { TranslationKey } from '@/core/i18n/translations';
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 import { IconButton } from '@/shared/ui/IconButton';
 
@@ -9,36 +11,29 @@ import type { CatalogKind } from '../../domain/entities/Catalog';
 import { catalogImage } from '../catalog/catalogImages';
 import type { CatalogPickerVm, HabitatFilter } from './CatalogPickerVm';
 
-const HABITATS: { value: HabitatFilter; label: string }[] = [
-  { value: 'sea', label: 'Mer' },
-  { value: 'fresh', label: 'Eau douce' },
-  { value: 'all', label: 'Tout' },
+const HABITATS: { value: HabitatFilter; label: TranslationKey }[] = [
+  { value: 'sea', label: 'picker.sea' },
+  { value: 'fresh', label: 'picker.fresh' },
+  { value: 'all', label: 'picker.all' },
 ];
 
 /** Textes propres à chaque catalogue : le composant reste le même pour les deux. */
-const COPY: Record<CatalogKind, { title: string; intro: string; search: string }> = {
-  species: {
-    title: 'Espèces présentes',
-    intro: 'Touchez les espèces vues ou pêchées sur ce spot, puis validez avec OK.',
-    search: 'Rechercher une espèce',
-  },
-  bait: {
-    title: 'Appâts utilisés',
-    intro: 'Touchez les appâts et leurres qui fonctionnent sur ce spot, puis validez avec OK.',
-    search: 'Rechercher un appât',
-  },
+const COPY: Record<CatalogKind, { title: TranslationKey; intro: TranslationKey; search: TranslationKey }> = {
+  species: { title: 'picker.species.title', intro: 'picker.species.intro', search: 'picker.species.search' },
+  bait: { title: 'picker.bait.title', intro: 'picker.bait.intro', search: 'picker.bait.search' },
 };
 
 /** VUE de choix des espèces ou des appâts (écrans 3a et 3c de la maquette). */
 export function CatalogPickerScreen({ kind, vm }: { kind: CatalogKind; vm: CatalogPickerVm }) {
+  const { t } = useI18n();
   const copy = COPY[kind];
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.screen}>
       <View style={styles.header}>
-        <IconButton icon="chevron-back" accessibilityLabel="Retour" onPress={vm.cancel} />
+        <IconButton icon="chevron-back" accessibilityLabel={t('common.back')} onPress={vm.cancel} />
         <Text accessibilityRole="header" style={styles.headerTitle}>
-          {copy.title}
+          {t(copy.title)}
         </Text>
       </View>
 
@@ -51,14 +46,14 @@ export function CatalogPickerScreen({ kind, vm }: { kind: CatalogKind; vm: Catal
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
           <View style={styles.top}>
-            <Text style={styles.intro}>{copy.intro}</Text>
+            <Text style={styles.intro}>{t(copy.intro)}</Text>
             <View style={styles.search}>
               <Ionicons name="search" size={18} color={colors.muted} />
               <TextInput
-                accessibilityLabel={copy.search}
+                accessibilityLabel={t(copy.search)}
                 value={vm.query}
                 onChangeText={vm.setQuery}
-                placeholder={copy.search}
+                placeholder={t(copy.search)}
                 placeholderTextColor="#6A7D80"
                 style={styles.searchInput}
               />
@@ -75,7 +70,7 @@ export function CatalogPickerScreen({ kind, vm }: { kind: CatalogKind; vm: Catal
                       onPress={() => vm.setHabitat?.(value)}
                       style={({ pressed }) => [styles.habitat, active && styles.habitatActive, pressed && styles.pressed]}
                     >
-                      <Text style={[styles.habitatLabel, active && styles.habitatLabelActive]}>{label}</Text>
+                      <Text style={[styles.habitatLabel, active && styles.habitatLabelActive]}>{t(label)}</Text>
                     </Pressable>
                   );
                 })}
@@ -89,20 +84,20 @@ export function CatalogPickerScreen({ kind, vm }: { kind: CatalogKind; vm: Catal
                   style={({ pressed }) => [styles.recognize, pressed && styles.pressed]}
                 >
                   <Ionicons name="camera-outline" size={20} color={colors.surface} />
-                  <Text style={styles.recognizeLabel}>Reconnaître l’espèce</Text>
+                  <Text style={styles.recognizeLabel}>{t('picker.recognize')}</Text>
                   <Ionicons name="sparkles" size={16} color={colors.accent} />
                 </Pressable>
-                <Text style={styles.hint}>Pas sûr de l’espèce ? Photographiez votre prise : le téléphone propose l’espèce, même sans réseau.</Text>
+                <Text style={styles.hint}>{t('picker.recognizeHint')}</Text>
               </>
             )}
           </View>
         }
-        ListEmptyComponent={<Text style={styles.empty}>Aucun résultat pour « {vm.query} ».</Text>}
+        ListEmptyComponent={<Text style={styles.empty}>{t('picker.noResult', { query: vm.query })}</Text>}
         renderItem={({ item }) => (
           <Pressable
             accessibilityRole="checkbox"
             accessibilityState={{ checked: item.selected, disabled: item.locked }}
-            accessibilityLabel={item.locked ? `${item.name}, déjà sur le spot` : item.name}
+            accessibilityLabel={item.locked ? t('picker.alreadyA11y', { name: item.name }) : item.name}
             disabled={item.locked}
             onPress={() => vm.toggle(item.id)}
             style={[styles.card, item.selected && styles.cardSelected, item.locked && styles.cardLocked]}
@@ -117,7 +112,7 @@ export function CatalogPickerScreen({ kind, vm }: { kind: CatalogKind; vm: Catal
             </View>
             <Text style={styles.name}>{item.name}</Text>
             <Text style={styles.sub}>
-              {item.locked ? 'Déjà sur le spot' : (item.latinName ?? (item.selected ? 'Sélectionné' : 'Toucher pour choisir'))}
+              {item.locked ? t('picker.already') : (item.latinName ?? (item.selected ? t('picker.selected') : t('picker.tapToChoose')))}
             </Text>
           </Pressable>
         )}

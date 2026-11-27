@@ -1,7 +1,10 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 
+import { useI18n } from '@/core/i18n/useI18n';
+
 import { catalogFor, type CatalogKind } from '../../domain/entities/Catalog';
+import { catalogName } from '../catalog/catalogName';
 import type { HabitatFilter } from './CatalogPickerVm';
 import { selectIds, useSpotDraftStore } from '../create/spotDraftStore';
 import type { CatalogPickerVm } from './CatalogPickerVm';
@@ -20,7 +23,14 @@ export const normalize = (text: string) =>
  */
 export function filterCatalog(kind: CatalogKind, query: string, habitat: HabitatFilter = 'all') {
   const q = normalize(query.trim());
-  const names = (item: ReturnType<typeof catalogFor>[number]) => [item.name, item.latinName ?? '', ...(item.members ?? [])];
+  // On cherche dans les trois langues : « bar », « seabass » ou « القاروص » trouvent la même espèce.
+  const names = (item: ReturnType<typeof catalogFor>[number]) => [
+    item.name,
+    catalogName(item, 'en'),
+    catalogName(item, 'ar'),
+    item.latinName ?? '',
+    ...(item.members ?? []),
+  ];
   return catalogFor(kind).filter((item) => {
     if (q) return names(item).some((n) => normalize(n).includes(q));
     return kind === 'bait' || habitat === 'all' || item.habitat === habitat;
@@ -38,10 +48,16 @@ export function useCatalogPickerViewModel(kind: CatalogKind): CatalogPickerVm {
   const toggleItem = useSpotDraftStore((s) => s.toggleItem);
   const [query, setQuery] = useState('');
   const [habitat, setHabitat] = useState<HabitatFilter>('sea');
+  const { t, language } = useI18n();
 
   const items = useMemo(
-    () => filterCatalog(kind, query, habitat).map((item) => ({ ...item, selected: selectedIds.includes(item.id), locked: false })),
-    [kind, query, habitat, selectedIds],
+    () => filterCatalog(kind, query, habitat).map((item) => ({
+        ...item,
+        name: catalogName(item, language),
+        selected: selectedIds.includes(item.id),
+        locked: false,
+      })),
+    [kind, query, habitat, selectedIds, language],
   );
 
   return {
@@ -50,8 +66,8 @@ export function useCatalogPickerViewModel(kind: CatalogKind): CatalogPickerVm {
     setQuery,
     // Filtre Mer · Eau douce · Tout : espèces seulement.
     ...(kind === 'species' ? { habitat, setHabitat } : {}),
-    countLabel: `${selectedIds.length} sélectionné(s)`,
-    confirmLabel: 'OK',
+    countLabel: t('picker.selectedCount', { count: selectedIds.length }),
+    confirmLabel: t('common.ok'),
     isSaving: false,
     error: null,
     toggle: (id: string) => toggleItem(kind, id),

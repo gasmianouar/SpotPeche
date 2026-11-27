@@ -2,20 +2,24 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, spacing } from '@/core/theme/tokens';
 
+import { useI18n } from '@/core/i18n/useI18n';
+
 import type { FishingIndex } from '../../domain/services/fishingIndex';
+import { indexLabelKey, translateReason } from '../weatherFormat';
 import { Card } from './Card';
 
 /** Carte « Indice de pêche » : note sur 5 + raisons. */
 export function FishingIndexCard({ index }: { index: FishingIndex }) {
+  const { t } = useI18n();
   return (
     <Card style={styles.row}>
-      <View style={styles.badge} accessibilityLabel={`Indice de pêche ${index.score} sur 5`}>
+      <View style={styles.badge} accessibilityLabel={t('weather.index.a11y', { score: index.score })}>
         <Text style={styles.score}>{index.score}/5</Text>
       </View>
       <View style={styles.texts}>
-        <Text style={styles.title}>Indice de pêche : {index.label.toLowerCase()}</Text>
-        <Text style={styles.reasons}>{index.reasons.join(' · ')}</Text>
-        <Text style={styles.note}>Indicatif, basé sur la pression et le vent</Text>
+        <Text style={styles.title}>{t('weather.index.title', { label: t(indexLabelKey(index.label)) })}</Text>
+        <Text style={styles.reasons}>{index.reasons.map((r) => translateReason(r, t)).join(' · ')}</Text>
+        <Text style={styles.note}>{t('weather.index.note')}</Text>
       </View>
     </Card>
   );

@@ -11,6 +11,7 @@ Application mobile iOS et Android (React Native + Expo, TypeScript) pour repére
 - Sprint 6 (agent IA : activité des poissons, indice de pêche) : [docs/SPRINT-6.md](docs/SPRINT-6.md)
 - Sprint 7 (reconnaissance des espèces sur le téléphone) : [docs/SPRINT-7.md](docs/SPRINT-7.md)
 - Sprint 8 (menu : Appâts → Google Maps, Mes prises) : [docs/SPRINT-8.md](docs/SPRINT-8.md)
+- Sprint 9 (l'app en arabe, français et anglais) : [docs/SPRINT-9.md](docs/SPRINT-9.md)
 
 ```bash
 npm install

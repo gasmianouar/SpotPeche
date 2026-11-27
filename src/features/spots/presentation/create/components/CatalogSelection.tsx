@@ -1,8 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius } from '@/core/theme/tokens';
 
+import { catalogName } from '../../catalog/catalogName';
 import type { CatalogItem, CatalogKind } from '../../../domain/entities/Catalog';
 import { catalogImage } from '../../catalog/catalogImages';
 
@@ -15,6 +17,7 @@ interface Props {
 
 /** Bloc « Espèces présentes » / « Appâts utilisés » : vignettes choisies + bouton Choisir. */
 export function CatalogSelection({ kind, title, items, onChoose }: Props) {
+  const { t, language } = useI18n();
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -23,7 +26,7 @@ export function CatalogSelection({ kind, title, items, onChoose }: Props) {
         </Text>
         {items.length > 0 && (
           <Pressable accessibilityRole="button" hitSlop={8} onPress={onChoose}>
-            <Text style={styles.link}>Modifier</Text>
+            <Text style={styles.link}>{t('create.edit')}</Text>
           </Pressable>
         )}
       </View>
@@ -34,20 +37,20 @@ export function CatalogSelection({ kind, title, items, onChoose }: Props) {
               <Image source={catalogImage(kind, item.id)} style={styles.thumbImage} resizeMode="contain" />
             </View>
             <Text style={styles.itemLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-              {item.name}
+              {catalogName(item, language)}
             </Text>
           </View>
         ))}
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Choisir : ${title}`}
+          accessibilityLabel={t('create.choose', { title })}
           onPress={onChoose}
           style={({ pressed }) => [styles.item, pressed && styles.pressed]}
         >
           <View style={[styles.thumb, styles.addThumb]}>
             <Ionicons name="add" size={24} color={colors.primary} />
           </View>
-          <Text style={[styles.itemLabel, styles.addLabel]}>Choisir</Text>
+          <Text style={[styles.itemLabel, styles.addLabel]}>{t('create.chooseShort')}</Text>
         </Pressable>
       </View>
     </View>

@@ -40,12 +40,38 @@ export function googleMapsAppUrl(destination: Coordinates): string {
 }
 
 /** Texte envoyé par « Partager » : la position du spot, de quoi lancer le trajet (Google Maps ou Waze) et la carte. */
-export function spotShareText(spot: Spot, species: readonly CatalogItem[]): string {
-  const lines = [`📍 Spot de pêche de ${spot.ownerName}, partagé avec Spot 🎣`];
-  if (species.length > 0) lines.push(`Espèces : ${species.map((s) => s.name).join(', ')}`);
-  lines.push(`GPS : ${point(spot.coordinates)}`);
-  lines.push(`Itinéraire Google Maps : ${googleMapsDirectionsUrl(spot.coordinates)}`);
-  lines.push(`Itinéraire Waze : ${wazeNavigationUrl(spot.coordinates)}`);
-  lines.push(`Carte : ${openStreetMapUrl(spot.coordinates)}`);
+/** Les libellés du message partagé (traduits par l'écran ; français par défaut). */
+export interface ShareTextLabels {
+  title: (owner: string) => string;
+  species: string;
+  googleMaps: string;
+  waze: string;
+  map: string;
+  /** Sépare un libellé de sa valeur : « : » en français, « : » sans espace en anglais et en arabe. */
+  separator: string;
+}
+
+export const FRENCH_SHARE_LABELS: ShareTextLabels = {
+  title: (owner) => `📍 Spot de pêche de ${owner}, partagé avec Spot 🎣`,
+  species: 'Espèces',
+  googleMaps: 'Itinéraire Google Maps',
+  waze: 'Itinéraire Waze',
+  map: 'Carte',
+  separator: ' : ',
+};
+
+export function spotShareText(
+  spot: Spot,
+  species: readonly CatalogItem[],
+  labels: ShareTextLabels = FRENCH_SHARE_LABELS,
+  speciesName: (item: CatalogItem) => string = (item) => item.name,
+): string {
+  const line = (label: string, value: string) => `${label}${labels.separator}${value}`;
+  const lines = [labels.title(spot.ownerName)];
+  if (species.length > 0) lines.push(line(labels.species, species.map(speciesName).join(', ')));
+  lines.push(line('GPS', point(spot.coordinates)));
+  lines.push(line(labels.googleMaps, googleMapsDirectionsUrl(spot.coordinates)));
+  lines.push(line(labels.waze, wazeNavigationUrl(spot.coordinates)));
+  lines.push(line(labels.map, openStreetMapUrl(spot.coordinates)));
   return lines.join('\n');
 }

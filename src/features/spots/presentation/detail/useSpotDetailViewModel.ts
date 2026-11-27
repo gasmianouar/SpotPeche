@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useDependencies } from '@/core/di/DependenciesProvider';
 import type { NavigationApp, ShareTarget } from '@/core/external/ExternalApps';
+import { useI18n } from '@/core/i18n/useI18n';
 import { useSessionStore } from '@/features/auth/presentation/state/sessionStore';
 
 import type { CatalogKind } from '../../domain/entities/Catalog';
@@ -10,7 +11,8 @@ import type { FishActivity } from '../../domain/entities/Spot';
 import { quoteOf, type MessageQuote, type ReactionEmoji } from '../../domain/entities/SpotMessage';
 import { openStreetMapUrl, spotShareText } from '../../domain/services/spotLinks';
 import { SpotNotFoundError, type MessageView, type SpotDetail } from '../../domain/usecases/GetSpotDetail';
-import { MESSAGE_MAX_PHOTOS, MessageValidationError } from '../../domain/usecases/PostMessage';
+import { MESSAGE_MAX_LENGTH, MESSAGE_MAX_PHOTOS, MessageValidationError } from '../../domain/usecases/PostMessage';
+import { catalogName } from '../catalog/catalogName';
 
 /** États de l'écran (union discriminée). */
 export type SpotDetailUiState =
@@ -26,6 +28,7 @@ export function useSpotDetailViewModel(spotId: string) {
   const { getSpotDetail, postMessage, reactToMessage, voteActivity, photoService, directionsService, shareService } = deps;
   const user = useSessionStore((s) => s.user);
   const userId = user?.id ?? '';
+  const { t, language } = useI18n();
 
   const [uiState, setUiState] = useState<SpotDetailUiState>({ status: 'loading' });
   // Barre d'emoji ouverte sous ce message (une seule à la fois, comme sur Messenger).
@@ -46,6 +49,16 @@ export function useSpotDetailViewModel(spotId: string) {
   const [shareOpen, setShareOpen] = useState(false);
   const [shareNotice, setShareNotice] = useState<string | null>(null);
 
+  /** Les règles d'envoi du domaine, traduites (le domaine les écrit en français). */
+  const sendErrorMessage = useCallback(
+    (message: string) => {
+      if (message.startsWith('Écrivez')) return t('send.empty');
+      if (message.startsWith('Le message')) return t('send.tooLong', { max: MESSAGE_MAX_LENGTH });
+      return t('send.tooManyPhotos', { max: MESSAGE_MAX_PHOTOS });
+    },
+    [t],
+  );
+
   const load = useCallback(async () => {
     try {
       const detail = await getSpotDetail.execute(spotId, userId);
@@ -54,10 +67,10 @@ export function useSpotDetailViewModel(spotId: string) {
       setUiState(
         error instanceof SpotNotFoundError
           ? { status: 'notFound' }
-          : { status: 'error', message: 'Impossible d’ouvrir ce spot. Réessayez.' },
+          : { status: 'error', message: t('detail.loadError') },
       );
     }
-  }, [getSpotDetail, spotId, userId]);
+  }, [getSpotDetail, spotId, userId, t]);
 
   // Rechargé à chaque retour sur l'écran (ex. après avoir ajouté des espèces).
   useFocusEffect(
@@ -83,10 +96,10 @@ export function useSpotDetailViewModel(spotId: string) {
         await directionsService.openDirections(spot.coordinates, app);
         setDirectionsOpen(false);
       } catch {
-        setDirectionsNotice('Impossible d’ouvrir l’itinéraire. Vérifiez qu’un navigateur ou l’app est installé.');
+        setDirectionsNotice(t('directions.error'));
       }
     },
-    [directionsService, spot],
+    [directionsService, spot, t],
   );
 
   const openShare = useCallback(() => {
@@ -98,24 +111,37 @@ export function useSpotDetailViewModel(spotId: string) {
   const shareTo = useCallback(
     async (target: ShareTarget) => {
       if (!detail) return;
-      const message = spotShareText(detail.spot, detail.species);
+      // Le message partagé est écrit dans la langue de l'app.
+      const message = spotShareText(
+        detail.spot,
+        detail.species,
+        {
+          title: (owner) => t('share.text.title', { owner }),
+          species: t('share.text.species'),
+          googleMaps: t('share.text.googleMaps'),
+          waze: t('share.text.waze'),
+          map: t('share.text.map'),
+          separator: language === 'fr' ? ' : ' : ': ',
+        },
+        (item) => catalogName(item, language),
+      );
       try {
         const outcome = await shareService.shareTo(target, message, openStreetMapUrl(detail.spot.coordinates));
         if (outcome === 'fallback') {
           // L'app n'est pas installée : une autre solution s'est ouverte, on le dit.
           setShareNotice(
             target === 'whatsapp'
-              ? 'WhatsApp n’est pas installé : ouverture de WhatsApp Web.'
-              : 'Messenger n’est pas installé : choisissez une autre app.',
+              ? t('share.noWhatsapp')
+              : t('share.noMessenger'),
           );
         } else {
           setShareOpen(false);
         }
       } catch {
-        setShareNotice('Impossible de partager pour le moment. Réessayez.');
+        setShareNotice(t('share.error'));
       }
     },
-    [shareService, detail],
+    [shareService, detail, t, language],
   );
 
   const openWeather = useCallback(() => {
@@ -187,11 +213,11 @@ export function useSpotDetailViewModel(spotId: string) {
       await load();
       setSentCount((n) => n + 1);
     } catch (error) {
-      setSendError(error instanceof MessageValidationError ? error.message : 'Envoi impossible. Réessayez.');
+      setSendError(error instanceof MessageValidationError ? sendErrorMessage(error.message) : t('send.error'));
     } finally {
       setIsSending(false);
     }
-  }, [postMessage, spotId, userId, user, text, photoUris, replyTo, load]);
+  }, [postMessage, spotId, userId, user, text, photoUris, replyTo, load, t, sendErrorMessage]);
 
   const composer = useMemo(
     () => ({

@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, touchTarget } from '@/core/theme/tokens';
 
 import { SpotPhotos } from './SpotPhotos';
@@ -35,10 +36,11 @@ export function CommentComposer({
   onPickPhotos,
   onRemovePhoto,
 }: Props) {
+  const { t } = useI18n();
   return (
     <View style={styles.section}>
       <Text style={styles.label} nativeID="spot-comment-label">
-        Commentaire
+        {t('create.comment')}
       </Text>
       <View style={[styles.box, error && styles.boxError]}>
         <SpotPhotos uris={photoUris} onRemove={onRemovePhoto} />
@@ -46,15 +48,15 @@ export function CommentComposer({
           accessibilityLabelledBy="spot-comment-label"
           value={value}
           onChangeText={onChangeText}
-          placeholder="Accès, profondeur, techniques qui marchent…"
+          placeholder={t('create.commentPlaceholder')}
           placeholderTextColor="#6A7D80"
           multiline
           maxLength={maxLength}
           style={styles.input}
         />
         <View style={styles.toolbar}>
-          <ToolButton icon="camera" label="Prendre une photo" disabled={!canAddPhotos} onPress={onTakePhoto} />
-          <ToolButton icon="image" label="Choisir dans la galerie" disabled={!canAddPhotos} onPress={onPickPhotos} />
+          <ToolButton icon="camera" label={t('create.takePhoto')} disabled={!canAddPhotos} onPress={onTakePhoto} />
+          <ToolButton icon="image" label={t('create.pickPhotos')} disabled={!canAddPhotos} onPress={onPickPhotos} />
           <Text style={styles.counter}>
             {value.length} / {maxLength}
           </Text>

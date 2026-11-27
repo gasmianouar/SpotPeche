@@ -1,21 +1,22 @@
-const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-const pad = (n: number) => String(n).padStart(2, '0');
+import { formatDayMonth, formatFullDate, formatTime } from '@/core/i18n/dates';
+import type { Language } from '@/core/i18n/languages';
+import { translate } from '@/core/i18n/translations';
 
 /** Date courte sur la photo : « 23 nov. », avec l'année si ce n'est pas l'année en cours. */
-export function formatCatchShortDate(ms: number, now: Date = new Date()): string {
+export function formatCatchShortDate(ms: number, language: Language, now: Date = new Date()): string {
   const d = new Date(ms);
-  const day = `${d.getDate()} ${MONTHS[d.getMonth()]}`;
-  return d.getFullYear() === now.getFullYear() ? day : `${day} ${d.getFullYear()}`;
+  return d.getFullYear() === now.getFullYear() ? formatDayMonth(language, d) : formatFullDate(language, d);
 }
 
-/** Date complète, sous la photo en grand : « 23 nov. 2026 à 17 h 20 ». */
-export function formatCatchLongDate(ms: number): string {
+/** Date complète, sous la photo en grand : « 23 nov. 2026 à 17:05 ». */
+export function formatCatchLongDate(ms: number, language: Language): string {
   const d = new Date(ms);
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} à ${d.getHours()} h ${pad(d.getMinutes())}`;
+  return translate(language, 'common.atTime', { date: formatFullDate(language, d), time: formatTime(d) });
 }
 
-/** « 3 prises », « 1 prise », « Aucune prise ». */
-export function catchCountLabel(count: number): string {
-  if (count === 0) return 'Aucune prise';
-  return `${count} prise${count > 1 ? 's' : ''}`;
+/** « Aucune prise », « 1 prise », « 3 prises » (et leurs équivalents). */
+export function catchCountLabel(count: number, language: Language): string {
+  if (count === 0) return translate(language, 'catches.none');
+  if (count === 1) return translate(language, 'catches.one');
+  return translate(language, 'catches.many', { count });
 }

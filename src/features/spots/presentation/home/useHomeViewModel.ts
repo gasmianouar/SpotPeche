@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 
 import { useDependencies } from '@/core/di/DependenciesProvider';
+import { useI18n } from '@/core/i18n/useI18n';
 import { DEFAULT_POSITION } from '@/core/location/LocationService';
 import { useSessionStore } from '@/features/auth/presentation/state/sessionStore';
 import { useDrawerStore } from '@/features/menu/presentation/drawerStore';
@@ -28,6 +29,7 @@ export function useHomeViewModel() {
   const { getMapSpots, locationService } = useDependencies();
   const userId = useSessionStore((state) => state.user?.id ?? '');
   const openMenu = useDrawerStore((state) => state.open);
+  const { t } = useI18n();
 
   // Paramètres de l'URL :
   // - filter=mine : posé par le menu « Mes spots » ;
@@ -56,13 +58,13 @@ export function useHomeViewModel() {
         })
         .catch(() => {
           if (!cancelled) {
-            setUiState((s) => ({ ...s, isLoading: false, errorMessage: 'Impossible de charger les spots.' }));
+            setUiState((s) => ({ ...s, isLoading: false, errorMessage: t('home.error') }));
           }
         });
       return () => {
         cancelled = true;
       };
-    }, [getMapSpots, userId, filter]),
+    }, [getMapSpots, userId, filter, t]),
   );
 
   // Bandeau « Spot enregistré » : visible tant que les paramètres sont dans l'URL.
@@ -78,15 +80,15 @@ export function useHomeViewModel() {
     // Sans try/catch, une localisation coupée faisait planter la promesse (« Uncaught in promise »).
     const position = await locationService.getCurrentPosition().catch(() => undefined);
     if (position === undefined) {
-      Alert.alert('Position indisponible', 'Activez la localisation du téléphone, puis réessayez.');
+      Alert.alert(t('home.positionUnavailable'), t('home.enableLocation'));
       return;
     }
     if (!position) {
-      Alert.alert('Position indisponible', 'Autorisez la localisation dans les réglages pour centrer la carte sur vous.');
+      Alert.alert(t('home.positionUnavailable'), t('home.allowLocation'));
       return;
     }
     setUiState((s) => ({ ...s, userPosition: position }));
-  }, [locationService]);
+  }, [locationService, t]);
 
   /** Quitte le mode « Mes spots » et réaffiche tous les spots. */
   const showAllSpots = useCallback(() => router.setParams({ filter: 'all' }), [router]);

@@ -2,9 +2,11 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 
 import type { CatalogItem, CatalogKind } from '../../../domain/entities/Catalog';
+import { catalogName } from '../../catalog/catalogName';
 import { catalogImage } from '../../catalog/catalogImages';
 
 interface Props {
@@ -15,11 +17,12 @@ interface Props {
 
 /** Une seule carte compacte : « Prises » puis « Appâts », séparées par un trait. */
 export function SpotItemsCard({ species, baits, onAdd }: Props) {
+  const { t } = useI18n();
   return (
     <View style={styles.card}>
-      <ItemsRow kind="species" title="Prises" addLabel="Ajouter une prise" items={species} onAdd={() => onAdd('species')} />
+      <ItemsRow kind="species" title={t('detail.catches')} addLabel={t('detail.addCatch')} items={species} onAdd={() => onAdd('species')} />
       <View style={styles.separator} />
-      <ItemsRow kind="bait" title="Appâts" addLabel="Ajouter un appât" items={baits} onAdd={() => onAdd('bait')} />
+      <ItemsRow kind="bait" title={t('detail.baits')} addLabel={t('detail.addBait')} items={baits} onAdd={() => onAdd('bait')} />
     </View>
   );
 }
@@ -39,6 +42,7 @@ interface RowProps {
  * Ouvert / fermé est un simple état d'affichage : il reste dans la vue (useState).
  */
 function ItemsRow({ kind, title, addLabel, items, onAdd }: RowProps) {
+  const { t, language } = useI18n();
   const [expanded, setExpanded] = useState(false);
 
   const thumbnails = items.map((item) => (
@@ -47,7 +51,7 @@ function ItemsRow({ kind, title, addLabel, items, onAdd }: RowProps) {
         <Image source={catalogImage(kind, item.id)} style={styles.thumbImage} resizeMode="contain" />
       </View>
       <Text style={styles.itemLabel} numberOfLines={1}>
-        {item.name}
+        {catalogName(item, language)}
       </Text>
     </View>
   ));
@@ -65,12 +69,12 @@ function ItemsRow({ kind, title, addLabel, items, onAdd }: RowProps) {
           style={({ pressed }) => [styles.add, pressed && styles.pressed]}
         >
           <Ionicons name="add" size={16} color="#0A434A" />
-          <Text style={styles.addLabel}>Ajouter</Text>
+          <Text style={styles.addLabel}>{t('common.add')}</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"
           accessibilityState={{ expanded }}
-          accessibilityLabel={`${expanded ? 'Replier' : 'Déplier'} : ${title}`}
+          accessibilityLabel={t(expanded ? 'detail.collapse' : 'detail.expand', { title })}
           onPress={() => setExpanded((e) => !e)}
           style={({ pressed }) => [styles.toggle, pressed && styles.pressed]}
         >
@@ -79,7 +83,7 @@ function ItemsRow({ kind, title, addLabel, items, onAdd }: RowProps) {
       </View>
 
       {items.length === 0 ? (
-        <Text style={styles.empty}>Rien pour l’instant.</Text>
+        <Text style={styles.empty}>{t('detail.nothingYet')}</Text>
       ) : expanded ? (
         <View style={styles.wrap}>{thumbnails}</View>
       ) : (

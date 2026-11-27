@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 
 import type { Catch } from '../../domain/entities/Catch';
@@ -16,12 +17,13 @@ interface Props {
 /** La photo d'une prise en grand, avec son lieu, sa date et un lien vers le spot. */
 export function CatchViewer({ item, onClose, onOpenSpot }: Props) {
   const insets = useSafeAreaInsets();
+  const { t, language } = useI18n();
   return (
     <Modal visible={item !== null} animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       {item && (
         <View style={[styles.screen, { paddingTop: insets.top }]}>
           <View style={styles.top}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Fermer la photo" onPress={onClose} style={styles.close}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('catches.viewer.close')} onPress={onClose} style={styles.close}>
               <Ionicons name="close" size={22} color={colors.surface} />
             </Pressable>
           </View>
@@ -29,7 +31,7 @@ export function CatchViewer({ item, onClose, onOpenSpot }: Props) {
             source={{ uri: item.photoUri }}
             resizeMode="contain"
             style={styles.photo}
-            accessibilityLabel={`Photo de la prise, ${item.placeName}`}
+            accessibilityLabel={t('catches.viewer.photo', { place: item.placeName })}
           />
           <View style={[styles.panel, { paddingBottom: spacing.lg + insets.bottom }]}>
             <View style={styles.line}>
@@ -38,14 +40,14 @@ export function CatchViewer({ item, onClose, onOpenSpot }: Props) {
             </View>
             <View style={styles.line}>
               <Ionicons name="calendar-outline" size={18} color={colors.primary} />
-              <Text style={styles.text}>{formatCatchLongDate(item.takenAt)}</Text>
+              <Text style={styles.text}>{formatCatchLongDate(item.takenAt, language)}</Text>
             </View>
             <Pressable
               accessibilityRole="button"
               onPress={() => onOpenSpot(item)}
               style={({ pressed }) => [styles.button, pressed && styles.pressed]}
             >
-              <Text style={styles.buttonLabel}>Voir le spot</Text>
+              <Text style={styles.buttonLabel}>{t('catches.viewer.openSpot')}</Text>
             </Pressable>
           </View>
         </View>

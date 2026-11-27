@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 import { Avatar } from '@/shared/ui/Avatar';
 
@@ -20,7 +21,8 @@ interface Props {
 
 /** En haut de la fiche : qui a créé le spot (profil Facebook), quand, les actions et le vote « ça mord ? ». */
 export function CreatorCard({ spot, votes, myVote, onDirections, onShare, onVote }: Props) {
-  const name = spot.ownerName || 'Pêcheur';
+  const { t, language } = useI18n();
+  const name = spot.ownerName || t('common.fisher');
   return (
     <View style={styles.card}>
       <View style={styles.row}>
@@ -29,23 +31,23 @@ export function CreatorCard({ spot, votes, myVote, onDirections, onShare, onVote
           <Text style={styles.name} numberOfLines={1}>
             {name}
           </Text>
-          <Text style={styles.date}>Créé le {formatDate(spot.createdAt)}</Text>
+          <Text style={styles.date}>{t('detail.createdOn', { date: formatDate(spot.createdAt, language) })}</Text>
         </View>
       </View>
       <View style={styles.actions}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Itinéraire vers le spot"
-          accessibilityHint="Choisir Google Maps ou Waze"
+          accessibilityLabel={t('detail.directionsA11y')}
+          accessibilityHint={t('detail.directionsHint')}
           onPress={onDirections}
           style={({ pressed }) => [styles.primary, pressed && styles.pressed]}
         >
           <Ionicons name="navigate" size={18} color={colors.surface} />
-          <Text style={styles.primaryLabel}>Itinéraire</Text>
+          <Text style={styles.primaryLabel}>{t('detail.directions')}</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Partager la localisation" onPress={onShare} style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('detail.shareA11y')} onPress={onShare} style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
           <Ionicons name="share-social-outline" size={18} color={colors.primary} />
-          <Text style={styles.secondaryLabel}>Partager</Text>
+          <Text style={styles.secondaryLabel}>{t('detail.share')}</Text>
         </Pressable>
       </View>
       <ActivityVoteBar votes={votes} myVote={myVote} onVote={onVote} />

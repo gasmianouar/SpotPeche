@@ -5,6 +5,7 @@ import { useRef } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useI18n } from '@/core/i18n/useI18n';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 import { IconButton } from '@/shared/ui/IconButton';
 
@@ -20,6 +21,7 @@ import { DEFAULT_CENTER, useHomeViewModel } from './useHomeViewModel';
  * La barre Accueil / Météo du bas est gérée par app/(tabs)/_layout.tsx.
  */
 export function HomeScreen() {
+  const { t } = useI18n();
   const { uiState, filter, savedSpot, locateMe, openMenu, createSpot, openSpot, showAllSpots } =
     useHomeViewModel();
   const onlyMine = filter === 'mine';
@@ -53,20 +55,21 @@ export function HomeScreen() {
         )}
 
         <View style={styles.topOverlay} pointerEvents="box-none">
-          {onlyMine && <FilterChip label={`Mes spots (${uiState.spots.length})`} onClear={showAllSpots} />}
+          {onlyMine && <FilterChip label={t('home.mySpotsCount', { count: uiState.spots.length })} onClear={showAllSpots} />}
 
           {savedSpot && (
             <View accessibilityRole="alert" style={[styles.banner, styles.savedBanner]}>
               <Ionicons name="checkmark-circle" size={20} color={colors.surface} />
               <Text style={[styles.bannerText, styles.savedText]}>
-                <Text style={styles.savedStrong}>Spot enregistré</Text> · ajouté à Mes spots
+                <Text style={styles.savedStrong}>{t('home.saved')}</Text>
+                {t('home.savedHint')}
               </Text>
             </View>
           )}
           {uiState.isLoading && (
             <View style={styles.banner}>
               <ActivityIndicator color={colors.primary} />
-              <Text style={styles.bannerText}>Chargement des spots…</Text>
+              <Text style={styles.bannerText}>{t('home.loading')}</Text>
             </View>
           )}
           {uiState.errorMessage && (
@@ -79,7 +82,7 @@ export function HomeScreen() {
           {isEmpty && (
             <View style={styles.banner}>
               <Text style={styles.bannerText}>
-                {onlyMine ? "Vous n'avez pas encore de spot. Touchez « + » pour en créer un." : 'Aucun spot pour le moment.'}
+                {onlyMine ? t('home.emptyMine') : t('home.empty')}
               </Text>
             </View>
           )}
@@ -88,7 +91,7 @@ export function HomeScreen() {
         <View style={styles.legend}>
           <MapLegend onlyMine={onlyMine} />
         </View>
-        <IconButton icon="locate" accessibilityLabel="Me localiser" onPress={locateMe} style={styles.locate} />
+        <IconButton icon="locate" accessibilityLabel={t('home.locate')} onPress={locateMe} style={styles.locate} />
       </View>
     </SafeAreaView>
   );

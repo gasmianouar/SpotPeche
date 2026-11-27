@@ -1,41 +1,44 @@
+import { authTexts } from '@/features/auth/presentation/texts';
+import { catchesTexts } from '@/features/catches/presentation/texts';
+import { forecastTexts } from '@/features/fishingForecast/presentation/texts';
+import { menuTexts } from '@/features/menu/presentation/texts';
+import { catalogTexts } from '@/features/spots/presentation/catalog/catalogTexts';
+import { spotsTexts } from '@/features/spots/presentation/texts';
+import { weatherTexts } from '@/features/weather/presentation/texts';
+
+import { commonTexts } from './commonTexts';
+import type { Texts } from './defineTexts';
 import type { Language } from './languages';
 
-/**
- * Les textes traduits. Le français sert de référence : chaque langue doit avoir
- * exactement les mêmes clés (vérifié par le type et par un test).
- * Pour l'instant : l'écran de connexion. Les autres écrans suivront.
- */
-const fr = {
-  'login.title': 'Vos coins de pêche, partagés entre passionnés.',
-  'login.subtitle': 'Repérez les spots autour de vous, enregistrez les vôtres et consultez la météo avant de partir.',
-  'login.continueFacebook': 'Continuer avec Facebook',
-  'login.continueApple': 'Continuer avec Apple',
-  'login.error': 'La connexion a échoué. Vérifiez votre réseau et réessayez.',
-  'login.language': 'Langue',
+/** Toutes les sources de textes. Ajouter une feature = l'ajouter ici. */
+const SOURCES = {
+  common: commonTexts,
+  auth: authTexts,
+  menu: menuTexts,
+  weather: weatherTexts,
+  forecast: forecastTexts,
+  spots: spotsTexts,
+  catalog: catalogTexts,
+  catches: catchesTexts,
 };
 
-export type TranslationKey = keyof typeof fr;
+type KeysOf<T> = T extends Texts<infer K> ? K : never;
+export type TranslationKey = { [S in keyof typeof SOURCES]: KeysOf<(typeof SOURCES)[S]> }[keyof typeof SOURCES];
 
-export const TRANSLATIONS: Record<Language, Record<TranslationKey, string>> = {
-  fr,
-  en: {
-    'login.title': 'Your fishing spots, shared between enthusiasts.',
-    'login.subtitle': 'Find spots around you, save your own and check the weather before you go.',
-    'login.continueFacebook': 'Continue with Facebook',
-    'login.continueApple': 'Continue with Apple',
-    'login.error': 'Sign-in failed. Check your network and try again.',
-    'login.language': 'Language',
-  },
-  ar: {
-    'login.title': 'أماكن صيدك، يتشاركها عشّاق الصيد.',
-    'login.subtitle': 'اكتشف أماكن الصيد من حولك، واحفظ أماكنك، وتحقّق من الطقس قبل الخروج.',
-    'login.continueFacebook': 'المتابعة باستخدام فيسبوك',
-    'login.continueApple': 'المتابعة باستخدام Apple',
-    'login.error': 'تعذّر تسجيل الدخول. تحقّق من اتصالك بالشبكة وحاول مرة أخرى.',
-    'login.language': 'اللغة',
-  },
-};
+const merge = (language: Language) =>
+  Object.assign({}, ...Object.values(SOURCES).map((source) => source[language])) as Record<TranslationKey, string>;
 
-export function translate(language: Language, key: TranslationKey): string {
-  return TRANSLATIONS[language][key] ?? TRANSLATIONS.fr[key];
+export const TRANSLATIONS: Record<Language, Record<TranslationKey, string>> = { fr: merge('fr'), en: merge('en'), ar: merge('ar') };
+
+export type TranslationParams = Record<string, string | number>;
+
+/** Le texte dans la langue voulue ; « {nom} » est remplacé par params.nom. */
+export function translate(language: Language, key: TranslationKey, params?: TranslationParams): string {
+  const text = TRANSLATIONS[language][key] ?? TRANSLATIONS.fr[key] ?? key;
+  return params ? text.replace(/\{(\w+)\}/g, (match, name: string) => (name in params ? String(params[name]) : match)) : text;
+}
+
+/** Traduction optionnelle d'une clé construite à l'exécution (ex. un identifiant du catalogue). */
+export function hasTranslation(key: string): key is TranslationKey {
+  return key in TRANSLATIONS.fr;
 }
