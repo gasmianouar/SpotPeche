@@ -1,5 +1,7 @@
 import { env } from '@/core/config/env';
 import { createDatabaseProvider } from '@/core/database/openDatabase';
+import { KvLanguageRepository } from '@/core/i18n/KvLanguageRepository';
+import { LanguagePreference } from '@/core/i18n/LanguagePreference';
 import { NativeExternalApps, type DirectionsService, type ShareService } from '@/core/external/ExternalApps';
 import { RandomIdGenerator } from '@/core/ids/IdGenerator';
 import {
@@ -12,6 +14,8 @@ import { ExpoPhotoPixelsReader } from '@/core/media/PhotoPixelsReader';
 import { FakeAuthRepository } from '@/features/auth/data/FakeAuthRepository';
 import { CachedFishActivityAdvisor } from '@/features/fishingForecast/data/CachedFishActivityAdvisor';
 import { LocalFishActivityAdvisor } from '@/features/fishingForecast/data/LocalFishActivityAdvisor';
+import { FindNearbyBaitShops } from '@/features/baitShops/domain/usecases/FindNearbyBaitShops';
+import { GetMyCatches } from '@/features/catches/domain/usecases/GetMyCatches';
 import { FORECAST_MIGRATIONS } from '@/features/fishingForecast/data/local/forecastMigrations';
 import { QuotaLimitedFishActivityAdvisor } from '@/features/fishingForecast/data/QuotaLimitedFishActivityAdvisor';
 import { SqliteUsageRepository } from '@/features/freeQuota/data/local/SqliteUsageRepository';
@@ -54,6 +58,9 @@ import { GetLocalWeather } from '@/features/weather/domain/usecases/GetLocalWeat
  * Pour brancher la vraie connexion Facebook/Apple, on remplacera FakeAuthRepository ici, et nulle part ailleurs.
  */
 export interface Dependencies {
+  languagePreference: LanguagePreference;
+  findNearbyBaitShops: FindNearbyBaitShops;
+  getMyCatches: GetMyCatches;
   signInWithProvider: SignInWithProvider;
   signOut: SignOut;
   getMapSpots: GetMapSpots;
@@ -108,6 +115,11 @@ export function createDependencies(): Dependencies {
   const expoLocation = new ExpoLocationService();
 
   return {
+    // Langue de l'app (arabe, français, anglais), gardée sur le téléphone.
+    languagePreference: new LanguagePreference(new KvLanguageRepository()),
+    // Menu : boutiques d'appâts (Google Maps) et « Mes prises » (mes photos publiées).
+    findNearbyBaitShops: new FindNearbyBaitShops(externalApps),
+    getMyCatches: new GetMyCatches(spotRepository, messageRepository),
     signInWithProvider: new SignInWithProvider(authRepository),
     signOut: new SignOut(authRepository),
     getMapSpots: new GetMapSpots(spotRepository),

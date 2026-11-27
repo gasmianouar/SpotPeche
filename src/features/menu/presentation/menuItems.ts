@@ -10,12 +10,14 @@ import type { SpotFilter } from '@/features/spots/domain/usecases/GetMapSpots';
  */
 export type MenuDestination =
   | { kind: 'map'; filter: SpotFilter } // l'accueil, avec tous les spots ou seulement les miens
-  | { kind: 'route'; href: '/appats' }
-  | { kind: 'comingSoon' };
+  | { kind: 'route'; href: '/mes-prises' } // un écran de l'app
+  | { kind: 'nearbyBaitShops' }; // ouvre Google Maps : boutiques d'appâts les plus proches
 
 export interface MenuItem {
   id: string;
   label: string;
+  /** Petite ligne sous le libellé (facultative). */
+  subtitle?: string;
   icon: keyof typeof Ionicons.glyphMap;
   iconColor?: string;
   destination: MenuDestination;
@@ -30,6 +32,18 @@ export const MENU_ITEMS: MenuItem[] = [
     iconColor: colors.mine,
     destination: { kind: 'map', filter: 'mine' },
   },
-  { id: 'baitShops', label: 'Appâts', icon: 'storefront-outline', destination: { kind: 'route', href: '/appats' } },
-  { id: 'catches', label: 'Carnet de prises', icon: 'fish-outline', destination: { kind: 'comingSoon' } },
+  {
+    id: 'baitShops',
+    label: 'Appâts',
+    subtitle: 'Boutiques les plus proches · Google Maps',
+    icon: 'storefront-outline',
+    destination: { kind: 'nearbyBaitShops' },
+  },
+  {
+    id: 'catches',
+    label: 'Mes prises',
+    subtitle: 'Photos, lieux et dates',
+    icon: 'fish-outline',
+    destination: { kind: 'route', href: '/mes-prises' },
+  },
 ];

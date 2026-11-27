@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import { useDependencies } from '@/core/di/DependenciesProvider';
+import type { TranslationKey } from '@/core/i18n/translations';
 
 import type { AuthProvider } from '../../domain/entities/User';
 import { SignInCancelledError } from '../../domain/repositories/AuthRepository';
@@ -10,7 +11,8 @@ import { useSessionStore } from '../state/sessionStore';
 export interface LoginUiState {
   /** Le fournisseur en cours de connexion, ou null si rien ne charge. */
   loadingProvider: AuthProvider | null;
-  errorMessage: string | null;
+  /** Le texte d'erreur à afficher (sa clé de traduction), ou null. */
+  errorKey: TranslationKey | null;
 }
 
 /**
@@ -26,23 +28,21 @@ export function useLoginViewModel() {
 
   const [uiState, setUiState] = useState<LoginUiState>({
     loadingProvider: null,
-    errorMessage: null,
+    errorKey: null,
   });
 
   const signIn = useCallback(
     async (provider: AuthProvider) => {
-      setUiState({ loadingProvider: provider, errorMessage: null });
+      setUiState({ loadingProvider: provider, errorKey: null });
       try {
         const user = await signInWithProvider.execute(provider);
         // Mettre l'utilisateur dans la session suffit : la navigation
         // (Stack.Protected dans app/_layout.tsx) bascule seule vers l'accueil.
         setUser(user);
       } catch (error) {
-        const errorMessage =
-          error instanceof SignInCancelledError
-            ? null
-            : 'La connexion a échoué. Vérifiez votre réseau et réessayez.';
-        setUiState({ loadingProvider: null, errorMessage });
+        // Annulé par l'utilisateur : pas d'erreur à afficher.
+        const errorKey: TranslationKey | null = error instanceof SignInCancelledError ? null : 'login.error';
+        setUiState({ loadingProvider: null, errorKey });
       }
     },
     [signInWithProvider, setUser],

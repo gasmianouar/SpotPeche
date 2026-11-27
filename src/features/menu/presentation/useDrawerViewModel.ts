@@ -11,9 +11,9 @@ import type { MenuItem } from './menuItems';
 /** VIEWMODEL du menu latéral. */
 export function useDrawerViewModel() {
   const router = useRouter();
-  const pathname = usePathname(); // route affichée, ex. "/" ou "/appats"
+  const pathname = usePathname(); // route affichée, ex. "/" ou "/mes-prises"
   const { filter } = useGlobalSearchParams<{ filter?: string }>(); // ex. "/?filter=mine"
-  const { signOut } = useDependencies();
+  const { signOut, findNearbyBaitShops } = useDependencies();
   const { isOpen, close } = useDrawerStore();
   const user = useSessionStore((s) => s.user);
   const clearSession = useSessionStore((s) => s.clear);
@@ -35,10 +35,13 @@ export function useDrawerViewModel() {
       } else if (d.kind === 'route') {
         router.navigate(d.href);
       } else {
-        Alert.alert(item.label, 'Disponible dans un prochain sprint.');
+        // On quitte Spot pour Google Maps, qui cherche autour de la position du téléphone.
+        findNearbyBaitShops.execute().catch(() =>
+          Alert.alert('Appâts', 'Impossible d’ouvrir Google Maps. Vérifiez qu’un navigateur ou l’app Google Maps est installé.'),
+        );
       }
     },
-    [close, router],
+    [close, router, findNearbyBaitShops],
   );
 
   /** Petit lien en bas du menu : les mentions des composants open source. */

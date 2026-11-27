@@ -98,7 +98,11 @@ function DrawerRow({ item, active, onPress }: { item: MenuItem; active: boolean;
       style={({ pressed }) => [styles.row, active && styles.rowActive, pressed && styles.pressed]}
     >
       <Ionicons name={item.icon} size={22} color={active ? colors.primary : (item.iconColor ?? colors.ink)} />
-      <Text style={[styles.rowLabel, active && styles.rowLabelActive]}>{item.label}</Text>
+      <View style={styles.rowTexts}>
+        <Text style={[styles.rowLabel, active && styles.rowLabelActive]}>{item.label}</Text>
+        {item.subtitle && <Text style={styles.rowSubtitle}>{item.subtitle}</Text>}
+      </View>
+      {item.destination.kind === 'nearbyBaitShops' && <Ionicons name="open-outline" size={18} color={colors.muted} />}
     </Pressable>
   );
 }
@@ -152,7 +156,9 @@ const styles = StyleSheet.create({
   },
   rowActive: { backgroundColor: colors.primarySoft },
   pressed: { opacity: 0.7 },
+  rowTexts: { flex: 1, gap: 2, paddingVertical: 6 },
   rowLabel: { fontFamily: fonts.bodyMedium, fontSize: 15, color: colors.ink },
+  rowSubtitle: { fontFamily: fonts.body, fontSize: 12, color: colors.muted },
   rowLabelActive: { fontFamily: fonts.bodyBold, color: colors.primary },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: spacing.sm, marginHorizontal: spacing.md },
   signOut: { marginHorizontal: spacing.md, marginTop: spacing.sm },

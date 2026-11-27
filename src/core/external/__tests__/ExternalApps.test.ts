@@ -44,6 +44,20 @@ describe('NativeExternalApps', () => {
     expect(opened).toEqual(['https://www.google.com/maps/dir/?api=1&destination=48.780300,2.445500']);
   });
 
+  it('cherche autour de moi dans l’app Google Maps (iPhone)', async () => {
+    const { phone, opened } = fakePhone(['comgooglemaps']);
+    await new NativeExternalApps(phone).searchNearby('magasin articles de pêche');
+    expect(opened).toEqual([`comgooglemaps://?q=${encodeURIComponent('magasin articles de pêche')}`]);
+  });
+
+  it('sinon, cherche avec le lien Google Maps universel', async () => {
+    const { phone, opened } = fakePhone([]);
+    await new NativeExternalApps(phone).searchNearby('magasin articles de pêche');
+    expect(opened).toEqual([
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('magasin articles de pêche')}`,
+    ]);
+  });
+
   it('partage le message complet dans WhatsApp', async () => {
     const { phone, opened } = fakePhone(['whatsapp']);
     const outcome = await new NativeExternalApps(phone).shareTo('whatsapp', 'Salut 📍', 'https://lien');

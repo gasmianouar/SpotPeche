@@ -10,6 +10,10 @@ export class InMemoryMessageRepository implements MessageRepository {
     return this.messages.filter((m) => m.spotId === spotId).sort((a, b) => a.createdAt - b.createdAt);
   }
 
+  async listByAuthor(authorId: string): Promise<SpotMessage[]> {
+    return this.messages.filter((m) => m.author.id === authorId);
+  }
+
   async add(message: SpotMessage): Promise<void> {
     this.messages = [...this.messages.filter((m) => m.id !== message.id), message];
   }

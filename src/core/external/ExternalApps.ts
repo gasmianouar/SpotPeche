@@ -6,7 +6,10 @@ import {
   wazeAppUrl,
   wazeNavigationUrl,
 } from '@/features/spots/domain/services/spotLinks';
+import type { NearbyPlaceSearch } from '@/features/baitShops/domain/ports/NearbyPlaceSearch';
 import type { Coordinates } from '@/shared/domain/Coordinates';
+
+import { googleMapsAppSearchUrl, googleMapsSearchUrl } from './googleMapsSearch';
 
 /** Les apps de navigation proposées. */
 export type NavigationApp = 'google-maps' | 'waze';
@@ -49,7 +52,7 @@ const nativePhoneLinks: PhoneLinks = {
  * On essaie d'abord le « schéma » de l'app (waze://, whatsapp://…) : s'il échoue,
  * c'est que l'app n'est pas installée, et on passe à la solution de repli.
  */
-export class NativeExternalApps implements DirectionsService, ShareService {
+export class NativeExternalApps implements DirectionsService, ShareService, NearbyPlaceSearch {
   constructor(private readonly phone: PhoneLinks = nativePhoneLinks) {}
 
   async openDirections(destination: Coordinates, app: NavigationApp): Promise<void> {
@@ -61,6 +64,12 @@ export class NativeExternalApps implements DirectionsService, ShareService {
     // Sinon le lien « https » : sur Android il ouvre l'app s'il la trouve ;
     // sans l'app, le site, qui propose de l'installer ou affiche le trajet.
     if (!opened) await this.phone.openURL(webUrl);
+  }
+
+  /** Recherche autour de moi dans Google Maps (app sur iPhone, sinon lien universel : app Android ou site). */
+  async searchNearby(query: string): Promise<void> {
+    const opened = await this.tryOpen(googleMapsAppSearchUrl(query));
+    if (!opened) await this.phone.openURL(googleMapsSearchUrl(query));
   }
 
   async shareTo(target: ShareTarget, message: string, link: string): Promise<ShareOutcome> {

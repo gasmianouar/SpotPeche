@@ -68,6 +68,15 @@ export class SqliteMessageRepository implements MessageRepository {
     return rows.map(rowToMessage);
   }
 
+  async listByAuthor(authorId: string): Promise<SpotMessage[]> {
+    const db = await this.getDatabase();
+    const rows = await db.getAllAsync<MessageRow>(
+      'SELECT * FROM spot_messages WHERE author_id = ? ORDER BY created_at DESC',
+      authorId,
+    );
+    return rows.map(rowToMessage);
+  }
+
   async add(message: SpotMessage): Promise<void> {
     const db = await this.getDatabase();
     await db.runAsync(INSERT_MESSAGE, messageToParams(message));

@@ -9,6 +9,8 @@ Application mobile iOS et Android (React Native + Expo, TypeScript) pour repére
 - Sprint 4 (création d'un spot, GPS exact, reconnaissance IA) : [docs/SPRINT-4.md](docs/SPRINT-4.md)
 - Sprint 5 (fiche spot, discussion façon Messenger) : [docs/SPRINT-5.md](docs/SPRINT-5.md)
 - Sprint 6 (agent IA : activité des poissons, indice de pêche) : [docs/SPRINT-6.md](docs/SPRINT-6.md)
+- Sprint 7 (reconnaissance des espèces sur le téléphone) : [docs/SPRINT-7.md](docs/SPRINT-7.md)
+- Sprint 8 (menu : Appâts → Google Maps, Mes prises) : [docs/SPRINT-8.md](docs/SPRINT-8.md)
 
 ```bash
 npm install
