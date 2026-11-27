@@ -2,7 +2,7 @@ import type { IdGenerator } from '@/core/ids/IdGenerator';
 import type { Coordinates } from '@/shared/domain/Coordinates';
 
 import { findCatalogItems } from '../entities/Catalog';
-import type { FishActivity, Spot } from '../entities/Spot';
+import { isSpotVisibility, type FishActivity, type Spot, type SpotVisibility } from '../entities/Spot';
 import type { SpotAuthor } from '../entities/SpotMessage';
 import type { ActivityVoteRepository } from '../repositories/ActivityVoteRepository';
 import type { SpotRepository } from '../repositories/SpotRepository';
@@ -13,6 +13,8 @@ export interface SpotDraft {
   speciesIds: readonly string[];
   baitIds: readonly string[];
   activity: FishActivity | null;
+  /** Qui pourra voir le spot (privé par défaut dans le formulaire). */
+  visibility: SpotVisibility;
   description: string;
   photoUris: readonly string[];
 }
@@ -68,6 +70,8 @@ export class CreateSpot {
       speciesIds: unique(findCatalogItems('species', draft.speciesIds).map((s) => s.id)),
       baitIds: unique(findCatalogItems('bait', draft.baitIds).map((b) => b.id)),
       activity: draft.activity,
+      // Par prudence, une valeur inattendue rend le spot privé.
+      visibility: isSpotVisibility(draft.visibility) ? draft.visibility : 'private',
       description,
       photoUris: [...draft.photoUris],
       createdAt: createdAt.getTime(),

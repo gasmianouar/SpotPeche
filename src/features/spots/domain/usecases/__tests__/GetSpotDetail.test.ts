@@ -1,3 +1,5 @@
+import { InMemoryBlockRepository } from '@/features/moderation/data/InMemoryBlockRepository';
+
 import { InMemoryActivityVoteRepository } from '../../../data/InMemoryActivityVoteRepository';
 import { InMemoryMessageRepository, InMemoryReactionRepository } from '../../../data/InMemoryMessageRepository';
 import { InMemorySpotRepository } from '../../../data/InMemorySpotRepository';
@@ -5,7 +7,7 @@ import { creatorPostId } from '../../entities/SpotMessage';
 import { GetSpotDetail, SpotNotFoundError } from '../GetSpotDetail';
 import { aMessage, aSpot } from '../../../testing/spotTestData';
 
-function setup(spot = aSpot()) {
+function setup(spot = aSpot(), blocks = new InMemoryBlockRepository()) {
   const messages = new InMemoryMessageRepository([
     aMessage({ id: 'm2', text: 'Deuxième', createdAt: 3000 }),
     aMessage({ id: 'm1', author: { id: 'me', name: 'Moi', photoUrl: null }, createdAt: 2000 }),
@@ -22,7 +24,7 @@ function setup(spot = aSpot()) {
     { spotId: 's1', userId: 'u17', activity: 'none' },
     { spotId: 's9', userId: 'u17', activity: 'medium' },
   ]);
-  return new GetSpotDetail(new InMemorySpotRepository([spot]), messages, reactions, votes);
+  return new GetSpotDetail(new InMemorySpotRepository([spot]), messages, reactions, votes, blocks);
 }
 
 describe('GetSpotDetail', () => {
@@ -71,6 +73,22 @@ describe('GetSpotDetail', () => {
     const detail = await setup(aSpot({ description: '  ' })).execute('s1', 'me');
 
     expect(detail.messages.map((m) => m.message.id)).toEqual(['m1', 'm2']);
+  });
+
+  it('cache un spot privé à tout le monde sauf à son créateur', async () => {
+    const privateSpot = aSpot({ visibility: 'private' });
+
+    await expect(setup(privateSpot).execute('s1', 'me')).rejects.toBeInstanceOf(SpotNotFoundError);
+    expect((await setup(privateSpot).execute('s1', 'u42')).isMine).toBe(true);
+  });
+
+  it('masque les messages des personnes que j’ai bloquées', async () => {
+    const blocks = new InMemoryBlockRepository();
+    await blocks.block({ blockerId: 'me', blockedId: 'u17', blockedName: 'Léa M.', createdAt: 0 });
+
+    const detail = await setup(aSpot(), blocks).execute('s1', 'me');
+
+    expect(detail.messages.map((m) => m.message.id)).toEqual([creatorPostId('s1'), 'm1']);
   });
 
   it('signale un spot introuvable', async () => {

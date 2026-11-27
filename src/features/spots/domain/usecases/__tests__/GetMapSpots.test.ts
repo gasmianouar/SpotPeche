@@ -1,8 +1,10 @@
+import { InMemoryBlockRepository } from '@/features/moderation/data/InMemoryBlockRepository';
+
 import { InMemorySpotRepository } from '../../../data/InMemorySpotRepository';
-import type { Spot } from '../../entities/Spot';
+import type { Spot, SpotVisibility } from '../../entities/Spot';
 import { GetMapSpots } from '../GetMapSpots';
 
-const spot = (id: string, ownerId: string): Spot => ({
+const spot = (id: string, ownerId: string, visibility: SpotVisibility = 'public'): Spot => ({
   id,
   name: `Spot ${id}`,
   ownerId,
@@ -12,6 +14,7 @@ const spot = (id: string, ownerId: string): Spot => ({
   speciesIds: [],
   baitIds: [],
   activity: null,
+  visibility,
   description: '',
   photoUris: [],
   createdAt: 0,
@@ -44,6 +47,23 @@ describe('GetMapSpots', () => {
 
     expect(result.map((s) => s.spot.id)).toEqual(['a', 'c']);
     expect(result.every((s) => s.isMine)).toBe(true);
+  });
+
+  it('montre mes spots privés, mais jamais ceux des autres', async () => {
+    const useCase = new GetMapSpots(
+      new InMemorySpotRepository([spot('a', 'me', 'private'), spot('b', 'other', 'private'), spot('c', 'other')]),
+    );
+
+    expect((await useCase.execute('me')).map((s) => s.spot.id)).toEqual(['a', 'c']);
+    expect((await useCase.execute('')).map((s) => s.spot.id)).toEqual(['c']);
+  });
+
+  it('masque les spots des personnes que j’ai bloquées', async () => {
+    const blocks = new InMemoryBlockRepository();
+    await blocks.block({ blockerId: 'me', blockedId: 'troll', blockedName: 'Troll', createdAt: 0 });
+    const useCase = new GetMapSpots(new InMemorySpotRepository([spot('a', 'troll'), spot('b', 'other')]), blocks);
+
+    expect((await useCase.execute('me')).map((s) => s.spot.id)).toEqual(['b']);
   });
 
   it('avec le filtre « mine » et personne de connecté, ne renvoie rien', async () => {

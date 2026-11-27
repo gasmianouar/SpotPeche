@@ -17,6 +17,7 @@ const row: SpotRow = {
   description: 'Accès par le chemin',
   photos: '["file:///photo1.jpg"]',
   created_at: 1795000000000,
+  visibility: 'public',
 };
 
 const spot: Spot = {
@@ -29,6 +30,7 @@ const spot: Spot = {
   speciesIds: ['brochet', 'perche'],
   baitIds: ['shad'],
   activity: 'good',
+  visibility: 'public',
   description: 'Accès par le chemin',
   photoUris: ['file:///photo1.jpg'],
   createdAt: 1795000000000,
@@ -46,6 +48,11 @@ describe('rowToSpot', () => {
     expect(result.activity).toBeNull();
     expect(result.description).toBe('');
     expect(result.ownerName).toBe('');
+  });
+
+  it('rend privé un spot dont la visibilité est absente ou inconnue', () => {
+    expect(rowToSpot({ ...row, visibility: null }).visibility).toBe('private');
+    expect(rowToSpot({ ...row, visibility: 'amis' }).visibility).toBe('private');
   });
 });
 
@@ -66,6 +73,7 @@ describe('spotToParams', () => {
       'Accès par le chemin',
       '["file:///photo1.jpg"]',
       1795000000000,
+      'public',
     ]);
   });
 });

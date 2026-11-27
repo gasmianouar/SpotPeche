@@ -11,7 +11,7 @@ import type { SpotFilter } from '@/features/spots/domain/usecases/GetMapSpots';
  */
 export type MenuDestination =
   | { kind: 'map'; filter: SpotFilter } // l'accueil, avec tous les spots ou seulement les miens
-  | { kind: 'route'; href: '/mes-prises' } // un écran de l'app
+  | { kind: 'route'; href: '/mes-prises' | '/compte' } // un écran de l'app
   | { kind: 'nearbyBaitShops' }; // ouvre Google Maps : boutiques d'appâts les plus proches
 
 export interface MenuItem {
@@ -47,5 +47,12 @@ export const MENU_ITEMS: MenuItem[] = [
     subtitle: 'menu.catchesSubtitle',
     icon: 'fish-outline',
     destination: { kind: 'route', href: '/mes-prises' },
+  },
+  {
+    id: 'account',
+    label: 'menu.account',
+    subtitle: 'menu.accountSubtitle',
+    icon: 'settings-outline',
+    destination: { kind: 'route', href: '/compte' },
   },
 ];

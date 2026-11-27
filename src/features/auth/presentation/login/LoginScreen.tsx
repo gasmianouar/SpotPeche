@@ -63,6 +63,17 @@ export function LoginScreen() {
               onPress={() => signIn('apple')}
             />
           )}
+          {/* Google : sur Android et iOS. Bouton clair, comme le demande Google pour son logo. */}
+          <SocialSignInButton
+            label={t('login.continueGoogle')}
+            icon="logo-google"
+            backgroundColor={colors.surface}
+            foregroundColor={colors.googleText}
+            borderColor={colors.googleBorder}
+            loading={uiState.loadingProvider === 'google'}
+            disabled={isBusy}
+            onPress={() => signIn('google')}
+          />
           {uiState.errorKey && (
             <Text accessibilityRole="alert" style={styles.error}>
               {t(uiState.errorKey)}
@@ -71,6 +82,7 @@ export function LoginScreen() {
         </View>
 
         <View style={styles.footer}>
+          <Text style={styles.legal}>{t('login.legal')}</Text>
           <LanguagePicker label={t('login.language')} languages={languages} selected={language} onSelect={choose} />
         </View>
       </SafeAreaView>
@@ -109,5 +121,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     padding: spacing.sm,
   },
-  footer: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xl },
+  footer: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xl, gap: spacing.md },
+  legal: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, color: colors.surface, textAlign: 'center', ...textShadow },
 });

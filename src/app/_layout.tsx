@@ -39,6 +39,7 @@ export default function RootLayout() {
           <Stack.Screen name="a-propos" />
           <Stack.Screen name="nouveau-spot" />
           <Stack.Screen name="spot/[id]" />
+          <Stack.Screen name="compte" />
         </Stack.Protected>
         <Stack.Protected guard={!isSignedIn}>
           <Stack.Screen name="login" />

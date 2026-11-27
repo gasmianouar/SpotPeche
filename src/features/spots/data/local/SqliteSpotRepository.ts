@@ -1,6 +1,6 @@
 import type { DatabaseProvider } from '@/core/database/openDatabase';
 
-import type { FishActivity, Spot } from '../../domain/entities/Spot';
+import { isSpotVisibility, type FishActivity, type Spot } from '../../domain/entities/Spot';
 import type { SpotRepository } from '../../domain/repositories/SpotRepository';
 import { parseList } from './jsonColumns';
 
@@ -16,6 +16,7 @@ export interface SpotRow {
   species: string | null;
   baits: string | null;
   activity: string | null;
+  visibility: string | null;
   description: string | null;
   photos: string | null;
   created_at: number;
@@ -36,6 +37,8 @@ export function rowToSpot(row: SpotRow): Spot {
     speciesIds: parseList(row.species),
     baitIds: parseList(row.baits),
     activity,
+    // Valeur inconnue ou absente : on choisit la plus prudente.
+    visibility: isSpotVisibility(row.visibility) ? row.visibility : 'private',
     description: row.description ?? '',
     photoUris: parseList(row.photos),
     createdAt: row.created_at,
@@ -58,14 +61,15 @@ export function spotToParams(spot: Spot): (string | number | null)[] {
     spot.description,
     JSON.stringify(spot.photoUris),
     spot.createdAt,
+    spot.visibility,
   ];
 }
 
 const SELECT_SPOTS =
-  'SELECT id, name, latitude, longitude, owner_id, owner_name, owner_photo, species, baits, activity, description, photos, created_at FROM spots';
+  'SELECT id, name, latitude, longitude, owner_id, owner_name, owner_photo, species, baits, activity, description, photos, created_at, visibility FROM spots';
 
 const INSERT_SPOT =
-  'INSERT OR REPLACE INTO spots (id, name, latitude, longitude, owner_id, owner_name, owner_photo, species, baits, activity, description, photos, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+  'INSERT OR REPLACE INTO spots (id, name, latitude, longitude, owner_id, owner_name, owner_photo, species, baits, activity, description, photos, created_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
 /**
  * Spots stockés dans la base SQLite du téléphone : disponibles hors connexion.

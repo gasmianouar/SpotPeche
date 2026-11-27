@@ -37,7 +37,8 @@ describe('SqliteMessageRepository (conversion)', () => {
     expect(rowToMessage({ ...row, reply_to_id: null }).replyTo).toBeNull();
   });
 
-  it('les migrations 3 (fiche spot) et 4 (avis « ça mord ? ») suivent la 2', () => {
-    expect(SPOT_MIGRATIONS.map((m) => m.version)).toEqual([1, 2, 3, 4]);
+  it('les migrations 3 (fiche spot), 4 (avis « ça mord ? ») puis 7 (visibilité) suivent la 2', () => {
+    // 5 et 6 appartiennent à la prévision de pêche et au quota gratuit (un seul compteur pour la base).
+    expect(SPOT_MIGRATIONS.map((m) => m.version)).toEqual([1, 2, 3, 4, 7]);
   });
 });

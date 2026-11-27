@@ -144,6 +144,17 @@ export function useSpotDetailViewModel(spotId: string) {
     [shareService, detail, t, language],
   );
 
+  /** Signaler le spot ou bloquer son créateur. */
+  const openReport = useCallback(() => {
+    router.push({ pathname: '/spot/[id]/signaler', params: { id: spotId } });
+  }, [router, spotId]);
+
+  /** Signaler un message de la discussion (appui long). */
+  const reportMessage = useCallback(
+    (messageId: string) => router.push({ pathname: '/spot/[id]/signaler', params: { id: spotId, message: messageId } }),
+    [router, spotId],
+  );
+
   const openWeather = useCallback(() => {
     if (!spot) return;
     router.push({ pathname: '/spot/[id]/meteo', params: { id: spot.id } });
@@ -251,6 +262,8 @@ export function useSpotDetailViewModel(spotId: string) {
     shareTo,
     shareLink: spot ? openStreetMapUrl(spot.coordinates) : '',
     openWeather,
+    openReport,
+    reportMessage,
     addItems,
     toggleReactions,
     react,

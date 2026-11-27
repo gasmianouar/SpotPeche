@@ -4,6 +4,7 @@ import { Animated, Modal, Pressable, ScrollView, StyleSheet, Text, View } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useI18n } from '@/core/i18n/useI18n';
+import { PROVIDER_NAMES } from '@/features/auth/domain/entities/User';
 import { colors, fonts, radius, spacing } from '@/core/theme/tokens';
 
 import { MENU_ITEMS, type MenuItem } from './menuItems';
@@ -55,7 +56,7 @@ export function AppDrawer() {
           </View>
           <Text style={styles.name}>{user?.displayName ?? t('menu.guest')}</Text>
           <Text style={styles.provider}>
-            {user ? t('menu.connectedWith', { provider: user.provider === 'apple' ? 'Apple' : 'Facebook' }) : ''}
+            {user ? t('menu.connectedWith', { provider: PROVIDER_NAMES[user.provider] }) : ''}
           </Text>
         </View>
 

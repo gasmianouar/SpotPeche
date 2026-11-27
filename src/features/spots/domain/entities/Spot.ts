@@ -9,6 +9,18 @@ export const FISH_ACTIVITIES: readonly FishActivity[] = ['good', 'medium', 'none
 export const isFishActivity = (value: string | null): value is FishActivity =>
   FISH_ACTIVITIES.includes(value as FishActivity);
 
+/**
+ * Qui peut voir un spot :
+ * - 'private' : seulement son créateur (c'est le choix par défaut, les pêcheurs protègent leurs coins) ;
+ * - 'public'  : toute la communauté (votes, prises, appâts et messages ouverts).
+ */
+export type SpotVisibility = 'private' | 'public';
+
+export const SPOT_VISIBILITIES: readonly SpotVisibility[] = ['private', 'public'];
+
+export const isSpotVisibility = (value: unknown): value is SpotVisibility =>
+  SPOT_VISIBILITIES.includes(value as SpotVisibility);
+
 /** L'avis d'un pêcheur sur l'activité d'un spot (« ça mord ? ») : un seul par personne. */
 export interface ActivityVote {
   readonly spotId: string;
@@ -31,11 +43,18 @@ export interface Spot {
   /** Identifiants du catalogue des appâts (ex. 'shad'). */
   readonly baitIds: readonly string[];
   readonly activity: FishActivity | null;
+  /** Qui peut voir le spot. */
+  readonly visibility: SpotVisibility;
   readonly description: string;
   /** Adresses locales des photos du spot. */
   readonly photoUris: readonly string[];
   /** Date de création, en millisecondes depuis 1970. */
   readonly createdAt: number;
+}
+
+/** Règle métier : un spot privé n'est visible que par son créateur. */
+export function isVisibleTo(spot: Pick<Spot, 'ownerId' | 'visibility'>, userId: string): boolean {
+  return spot.visibility === 'public' || (userId !== '' && spot.ownerId === userId);
 }
 
 /**

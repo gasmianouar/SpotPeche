@@ -8,7 +8,7 @@ import { useSessionStore } from '@/features/auth/presentation/state/sessionStore
 import type { Coordinates } from '@/shared/domain/Coordinates';
 
 import { findCatalogItems, type CatalogKind } from '../../domain/entities/Catalog';
-import type { FishActivity } from '../../domain/entities/Spot';
+import type { FishActivity, SpotVisibility } from '../../domain/entities/Spot';
 import { DESCRIPTION_MAX_LENGTH, SpotValidationError } from '../../domain/usecases/CreateSpot';
 import { MAX_PHOTOS, useSpotDraftStore } from './spotDraftStore';
 
@@ -22,7 +22,7 @@ export interface CreateSpotErrors {
 export function useCreateSpotViewModel() {
   const { t } = useI18n();
   const router = useRouter();
-  const { createSpot, preciseLocationService, photoService } = useDependencies();
+  const { createSpot, preciseLocationService, photoService, getAccountPreferences } = useDependencies();
   const user = useSessionStore((s) => s.user);
   const draft = useSpotDraftStore();
 
@@ -54,6 +54,20 @@ export function useCreateSpotViewModel() {
       setIsLocating(false);
     }
   }, [preciseLocationService, t]);
+
+  // Visibilité par défaut choisie dans « Compte et confidentialité » (privé si rien n'est réglé).
+  useEffect(() => {
+    let active = true;
+    getAccountPreferences
+      .execute()
+      .then((prefs) => {
+        if (active) useSpotDraftStore.getState().applyDefaultVisibility(prefs.defaultSpotVisibility);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [getAccountPreferences]);
 
   // Au premier affichage uniquement (le retour depuis le choix des espèces ne relance rien).
   const started = useRef(false);
@@ -141,6 +155,7 @@ export function useCreateSpotViewModel() {
       species: findCatalogItems('species', draft.speciesIds),
       baits: findCatalogItems('bait', draft.baitIds),
       activity: draft.activity,
+      visibility: draft.visibility,
       description: draft.description,
       photoUris: draft.photoUris,
     },
@@ -151,6 +166,7 @@ export function useCreateSpotViewModel() {
     onMapMoved,
     openPicker,
     setActivity: (activity: FishActivity) => draft.setActivity(activity),
+    setVisibility: (visibility: SpotVisibility) => draft.setVisibility(visibility),
     setDescription: (text: string) => draft.setDescription(text),
     takePhoto,
     pickPhotos,

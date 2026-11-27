@@ -12,6 +12,7 @@ export const aSpot = (overrides: Partial<Spot> = {}): Spot => ({
   speciesIds: ['brochet'],
   baitIds: ['shad'],
   activity: 'good',
+  visibility: 'public',
   description: 'Ponton en bois.',
   photoUris: [],
   createdAt: 1000,

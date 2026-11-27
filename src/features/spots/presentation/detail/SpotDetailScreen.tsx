@@ -51,6 +51,10 @@ export function SpotDetailScreen({ spotId }: { spotId: string }) {
           accessibilityLabel={t('detail.weather')}
           onPress={vm.openWeather}
         />
+        {/* Signaler le spot ou bloquer son créateur : seulement sur le spot de quelqu'un d'autre. */}
+        {uiState.status === 'ready' && !uiState.detail.isMine && (
+          <IconButton icon="ellipsis-vertical" accessibilityLabel={t('report.moreOptions')} onPress={vm.openReport} />
+        )}
       </View>
 
       {uiState.status === 'loading' && (
@@ -95,16 +99,34 @@ export function SpotDetailScreen({ spotId }: { spotId: string }) {
               {uiState.detail.messages.length === 0 && (
                 <Text style={styles.empty}>{t('detail.noMessages')}</Text>
               )}
-              {uiState.detail.messages.map((view) => (
-                <MessageBubble
-                  key={view.message.id}
-                  view={view}
-                  reactionsOpen={vm.reactionsOpenFor === view.message.id}
-                  onToggleReactions={vm.toggleReactions}
-                  onReact={vm.react}
-                  onReply={vm.reply}
-                />
-              ))}
+              {uiState.detail.messages.map((view) => {
+                const bubble = (
+                  <MessageBubble
+                    key={view.message.id}
+                    view={view}
+                    reactionsOpen={vm.reactionsOpenFor === view.message.id}
+                    onToggleReactions={vm.toggleReactions}
+                    onReact={vm.react}
+                    onReply={vm.reply}
+                  />
+                );
+                // Messages des autres : appui long (ou action d'accessibilité) pour les signaler.
+                // La publication du créateur se signale avec le spot (menu ⋮).
+                if (view.isMine || view.isCreatorPost) return bubble;
+                return (
+                  <Pressable
+                    key={view.message.id}
+                    onLongPress={() => vm.reportMessage(view.message.id)}
+                    delayLongPress={400}
+                    accessibilityActions={[{ name: 'longpress', label: t('report.message') }]}
+                    onAccessibilityAction={(event) => {
+                      if (event.nativeEvent.actionName === 'longpress') vm.reportMessage(view.message.id);
+                    }}
+                  >
+                    {bubble}
+                  </Pressable>
+                );
+              })}
             </View>
           </ScrollView>
 
